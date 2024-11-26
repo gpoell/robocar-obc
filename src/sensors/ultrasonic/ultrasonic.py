@@ -1,6 +1,8 @@
 import time
 import threading
 import asyncio
+import os
+import random
 import RPi.GPIO as GPIO
 import paho.mqtt.client as mqtt
 from enum import IntEnum
@@ -96,9 +98,10 @@ class Ultrasonic(MqttDevice):
 
     def run(self, freq: float=0.05):
         self.status = self._connect_to_broker()
+        environ = os.environ["ENVIRON"]
         while self.status:
             time.sleep(freq)
-            distance = self.get_distance()
+            distance = self.get_distance() if environ == "PROD" else random.uniform(120.5, 125.7)
             threadCount = threading.active_count()
 
             start_time = time.perf_counter()
