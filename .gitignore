@@ -1,0 +1,7 @@
+# Ignore Mosquitto MQTT configuration files
+mosquitto/config
+mosquitto/data
+mosquitto/logs
+
+# Ignore Python Dependencies/Cache
+__pycache__

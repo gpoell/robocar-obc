@@ -1,0 +1,53 @@
+services:
+
+  app:
+    build: ./src/app
+    tty: true
+    container_name: app
+    volumes:
+      - ./src/app:/app
+    environment:
+      - ENVIRON=${ENVIRON}
+
+  
+  motor:
+    build: ./src/motor
+    tty: true
+    container_name: motor
+    volumes:
+      - ./src/motor:/app
+    privileged: true
+    environment:
+      - ENVIRON=${ENVIRON}
+
+
+  ultrasonic:
+    build: ./src/sensors/ultrasonic
+    tty: true
+    container_name: sensor-ultrasonic
+    volumes:
+      - ./src/sensors/ultrasonic:/app
+    working_dir: /app
+    privileged: true
+    environment:
+      - ENVIRON=${ENVIRON}
+
+
+
+  mqtt-broker:
+    image: eclipse-mosquitto:latest
+    container_name: mqtt-broker
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/logs:/mosquitto/logs
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 256M
