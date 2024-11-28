@@ -1,38 +1,120 @@
-@dataclass(frozen=True)
+from dataclasses import dataclass
+from typing import Union
+
 class Topic:
-    topic: str
-    qos: int
+    """
+    This is the base data type for MQTT Topics, ensuring correct properties are
+    defined for publishing and subscribing data. All topics should contain
+    the following:
+
+    1. topic: a string representation of a topic in the format /my/topic/data
+    2. qos: quality of service level between 0 and 3.
+    """
+
+    def __init__(
+        self,
+        topic: str,
+        qos: int
+    ) -> None:
+
+
+        if not isinstance(topic, str):
+            raise TypeError("Supported types for topic are: <str>")
+        if not isinstance(qos, int):
+            raise TypeError("Supported types for qos are: <int>")
+        if qos > 3 or qos < 0:
+            raise ValueError("MQTT clients only support QOS levels 0-3")
+
+        self.topic = topic
+        self.qos = qos
+
 
     def get_values(self) -> tuple:
+        """Returns topic values."""
         vals = [val for attr, val in self.__dict__.items()]
         return tuple(vals)
 
 @dataclass
 class Publishers:
+    """Abstract class for Publisher data types."""
 
     def get_topics(self) -> list[tuple]:
+        """Returns a list of topics for each property."""
         topics = [val for _, val in self.__dict__.items()]
         return [topic.get_values() for topic in topics]
 
 @dataclass
 class Subscribers:
-    
+    """Abstract class for Subscriber data types."""
+
     def get_topics(self) -> list[tuple]:
+        """Returns a list of topics for each property."""
         topics = [val for _, val in self.__dict__.items()]
         return [topic.get_values() for topic in topics]
 
 
 @dataclass
 class Topics:
-    publishers: Union[Publishers, None]
-    subscribers: Union[Subscribers, None]
+    """
+    A collection of topics intended for publishing and subscribing to the MQTT broker.
+
+    :param publishers: defines <Publishing> topics for the respective device.
+    :param subscribers: defines <Subscriber> topics for the respective device.
+    """
+    def __init__(
+        self,
+        publishers: Union[Publishers, None],
+        subscribers: Union[Subscribers, None]
+    ) -> None:
+
+        assert isinstance(publishers, Publishers) or publishers is None,"Supported types of publishers are: Publishers, None"
+        assert isinstance(subscribers, Subscribers) or subscribers is None, "Supported types of subscribers are: Subscribers, None"
+
+        self.publishers = publishers
+        self.subscribers = subscribers
 
     def get_publishers(self) -> list[tuple]:
-        if self.publishers == None:
+        """Method to return publishing topic values."""
+
+        if self.publishers is None:
             return [()]
+
         return self.publishers.get_topics()
 
     def get_subscribers(self) -> list[tuple]:
-        if self.subscribers == None:
+        """Method to return subscriber topic values."""
+
+        if self.subscribers is None:
             return [()]
+
         return self.subscribers.get_topics()
+
+@dataclass
+class UltrasonicPublishers(Publishers):
+    """
+    Ultrasonic topics for publishing data. Use this data type for
+    creating the Topics object required by the Ultrasonic class.
+
+    - distance: publishes ultrasonic distance
+    - status:   publishes the status of the ultrasonic sensor
+    - threads:  publishes the current thread count
+    """
+
+    distance = Topic(topic="device/ultrasonic/distance", qos=0)
+    status = Topic(topic="device/ultrasonic/status", qos=0)
+    threads = Topic(topic="device/ultrasonic/threads", qos=0)
+
+@dataclass
+class UltrasonicSubscribers(Subscribers):
+    """
+    Ultrasonic topics for publishing data. Use this data type for
+    creating the Topics object required by the Ultrasonic class.
+
+    - appStatus: subscribes to the overall app status
+    """
+
+    appStatus = Topic(topic="app/status", qos=1)
+
+if __name__ == "__main__":
+    obj = Topics(UltrasonicPublishers(), UltrasonicSubscribers())
+    print(obj.__dict__.items())
