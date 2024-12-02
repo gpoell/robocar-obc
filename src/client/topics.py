@@ -34,26 +34,17 @@ class Topic:
         vals = [val for attr, val in self.__dict__.items()]
         return tuple(vals)
 
-@dataclass
+
+@dataclass(frozen=True)
 class Publishers:
     """Abstract class for Publisher data types."""
 
-    def get_topics(self) -> list[tuple]:
-        """Returns a list of topics for each property."""
-        topics = [val for _, val in self.__dict__.items()]
-        return [topic.get_values() for topic in topics]
 
-@dataclass
+@dataclass(frozen=True)
 class Subscribers:
     """Abstract class for Subscriber data types."""
 
-    def get_topics(self) -> list[tuple]:
-        """Returns a list of topics for each property."""
-        topics = [val for _, val in self.__dict__.items()]
-        return [topic.get_values() for topic in topics]
 
-
-@dataclass
 class Topics:
     """
     A collection of topics intended for publishing and subscribing to the MQTT broker.
@@ -73,23 +64,8 @@ class Topics:
         self.publishers = publishers
         self.subscribers = subscribers
 
-    def get_publishers(self) -> list[tuple]:
-        """Method to return publishing topic values."""
 
-        if self.publishers is None:
-            return [()]
-
-        return self.publishers.get_topics()
-
-    def get_subscribers(self) -> list[tuple]:
-        """Method to return subscriber topic values."""
-
-        if self.subscribers is None:
-            return [()]
-
-        return self.subscribers.get_topics()
-
-@dataclass
+@dataclass(frozen=True)
 class UltrasonicPublishers(Publishers):
     """
     Ultrasonic topics for publishing data. Use this data type for
@@ -100,11 +76,12 @@ class UltrasonicPublishers(Publishers):
     - threads:  publishes the current thread count
     """
 
-    distance = Topic(topic="device/ultrasonic/distance", qos=0)
-    status = Topic(topic="device/ultrasonic/status", qos=0)
-    threads = Topic(topic="device/ultrasonic/threads", qos=0)
+    distance: Topic = Topic(topic="device/ultrasonic/distance", qos=0)
+    status: Topic = Topic(topic="device/ultrasonic/status", qos=0)
+    threads: Topic = Topic(topic="device/ultrasonic/threads", qos=0)
 
-@dataclass
+
+@dataclass(frozen=True)
 class UltrasonicSubscribers(Subscribers):
     """
     Ultrasonic topics for publishing data. Use this data type for
@@ -113,8 +90,17 @@ class UltrasonicSubscribers(Subscribers):
     - appStatus: subscribes to the overall app status
     """
 
-    appStatus = Topic(topic="app/status", qos=1)
+    appStatus: Topic = Topic(topic="app/status", qos=1)
 
-if __name__ == "__main__":
-    obj = Topics(UltrasonicPublishers(), UltrasonicSubscribers())
-    print(obj.__dict__.items())
+
+def get_topics(topics: Union[Publishers, Subscribers]) -> list[tuple]:
+    """
+    Returns a list of topic values for Publishers or Subscribers.
+    Useful for subscribing/publishing multiple topics to MQTT broker.
+    """
+
+    if not isinstance(topics, (Publishers, Subscribers)):
+        raise TypeError("Supported types for get_topics are: <Publishers>, <Subscribers>")
+
+    topics = [val for _, val in topics.__dict__.items()]
+    return [topic.get_values() for topic in topics]
