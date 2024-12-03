@@ -43,13 +43,12 @@ class TestUltrasonic(unittest.TestCase):
         Important for interfacing with physical hardware or running in a disconnected mode.
         """
         if self.device.env == Environment.PROD:
-            trig_stat = self.GPIO.gpio_function(self.device.trigger_pin)
-            echo_stat = self.GPIO.gpio_function(self.device.echo_pin)
+            trig_stat = self.device.GPIO.gpio_function(self.device.trigger_pin)
+            echo_stat = self.device.GPIO.gpio_function(self.device.echo_pin)
 
-            self.assertTrue(trig_stat)
-            self.assertTrue(echo_stat)
+            self.assertIs(trig_stat, 0)
+            self.assertIs(echo_stat, 1)
 
-        self.assertTrue(True)
 
     def test_calculate_pulse_time(self):
         """
@@ -61,7 +60,8 @@ class TestUltrasonic(unittest.TestCase):
             result = self.device.calculate_pulse_time()
             self.assertIsInstance(result, float)
 
-        self.assertRaises(AttributeError, self.device.calculate_pulse_time)
+        if self.device.env == Environment.DEV:
+            self.assertRaises(AttributeError, self.device.calculate_pulse_time)
 
 
     def test_calculate_distance(self):
