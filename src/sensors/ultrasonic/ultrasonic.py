@@ -2,35 +2,59 @@ import time
 import threading
 import random
 import importlib
-# import RPi.GPIO as GPIO
-# from devices import MqttDevice, ClientConfig
+from statistics import median
 from client.mqtt_client import MqttDevice, ClientConfig, Environment, State
 
 
 class Ultrasonic(MqttDevice):
+    """
+    This class is used to collect distances (cm) from the Ultrasonic sensor and publish the distances
+    and system data (threads, state, etc..) to the MQTT Broker. All MQTT Broker functionality, such as
+    connecting to the broker, publishing, subscribing, and disconnecting is inherited through the MqttDevice
+    class. Current distance measurements are sampled at a default rate of ~20Hz and are reported in centimeters.
+    The data collected from this sensor is used by the State Machine to inform other services, such as Motor
+    related services, to perform tasks like obstacle detection.
+
+    PARAMETERS
+
+    :param    client_config <ClientConfig>:  contains MQTT Broker connection details
+    :param                      trig <int>:  the TRIG pin on the Raspberry PI, required for transmitting ultrasound signals
+    :param                      echo <int>:  the ECHO pin on the Raspberry PI, required for receiving ultrasound signals
+    :param              max_distance <int>:  measurement used to calculate the duration threshold for recording ultrasound signals
+
+    To use this class, start by creating a Topics class using (or updating) instances of the UltrasonicPublishers and UltrasonicSubscribers.
+    Create a ClientConfig object using the topics and MQTT Broker connection details, and then create the Ultrasonic device.
+
+    See main.py as an example.
+
+    """
+
+
 
     def __init__(
         self,
-        clientConfig: ClientConfig,
+        client_config: ClientConfig,
         trig: int = 27,
         echo: int = 22,
-        maxDistance: int = 30
     ) -> None:
 
-        assert type(maxDistance) == int, "Supported types for maxDistance are: int"
-        assert maxDistance > 0 and maxDistance < 1000, "The maximum distance should be positive and less than 1000cm."
-        assert type(trig) == int and trig > 0, "GPIO pins must be integers and cannot be negative."
-        assert type(echo) == int and trig > 0, "GPIO pins must be integers and cannot be negative."
-        assert type(clientConfig) == ClientConfig, "Supported types for clientConfig are: ClientConfig"
+        if not isinstance(trig, int):
+            raise TypeError("Supported types for TRIG GPIO pins are: <int>")
+        if not isinstance(echo, int):
+            raise TypeError("Supported types for ECHO GPIO pins are: <int>")
+        if not isinstance(client_config, ClientConfig):
+            raise TypeError("Supported types for client_config are: <ClientConfig>")
+        if trig < 1 or echo < 1:
+            raise ValueError("GPIO pins cannot be negative.")
 
-        super().__init__(clientConfig)
+
+        super().__init__(client_config)
 
         self.trigger_pin = trig
         self.echo_pin = echo
-        self.MAX_DISTANCE = maxDistance         # define the maximum measuring distance, unit: cm
-        self.timeOut = self.MAX_DISTANCE * 60   # calculate timeout according to the maximum measuring distance
-        # self.client = mqtt.Client()             # Each sensor/module should manage its own client
         self.GPIO = None
+        self.speed_conversion = 340.0 / 2.0 / 10000.0 # Speed of sound conversion to CM (340 m/s)
+
 
         # GPIO Settings
         if self.env == Environment.PROD:
@@ -61,22 +85,32 @@ class Ultrasonic(MqttDevice):
             raise e
 
 
-    def pulseIn(self, pin, level, timeOut):  # obtain pulse time of a pin under timeOut
-        t0 = time.time()
-        while (self.GPIO.input(pin) != level):
-            if ((time.time() - t0) > timeOut * 0.000001):
-                return 0
+    def calculate_pulse_time(self) -> float:
+        """
+        Returns the duration for ultrasound to return to receiver.
+        This method should only be called when service is running on
+        the Raspberry Pi.
+        """
 
-        t0 = time.time()
-        while (self.GPIO.input(pin) == level):
-            if ((time.time() - t0) > timeOut * 0.000001):
-                return 0
+        # Send a 10us pulse to the Trig pin
+        self.GPIO.output(self.trigger_pin, self.GPIO.HIGH)
+        time.sleep(0.00001)  # 10us
+        self.GPIO.output(self.trigger_pin, self.GPIO.LOW)
 
-        pulseTime = (time.time() - t0) * 1000000
-        return pulseTime
+        # Wait for the Echo pin to go high and start timing
+        while self.GPIO.input(self.echo_pin) == self.GPIO.LOW:
+            pulse_start = time.time()
+
+        # Wait for the Echo pin to go low and stop timing
+        while self.GPIO.input(self.echo_pin) == self.GPIO.HIGH:
+            pulse_end = time.time()
+
+        # Calculate the pulse duration
+        pulse_duration = (pulse_end - pulse_start) * 1000000
+        return pulse_duration
 
 
-    def get_distance(self, samples: int=5) -> float:  # get the measurement results of ultrasonic module,with unit: cm
+    def calculate_distance(self, samples: int=5) -> float:
         """
         Returns the distance reported by the ultrasonic sensor by applying a median filter on a collection
         of distance samples to remove noise.
@@ -88,18 +122,10 @@ class Ultrasonic(MqttDevice):
             print("Publishing distance: ", distance)
             return distance
 
-        # List comprehension here on new method
-        distance_samples = [0, 0, 0, 0, 0]
+        # Generate distance samples - calculate pulse time and convert to distance using SoS conversion
+        distance_samples = [self.calculate_pulse_time() * self.speed_conversion for _ in range(samples)]
 
-        # Abstract this into two functions- 1 should calculate ping time2 should calculate distance
-        for i in range(samples):
-            self.GPIO.output(self.trigger_pin, self.GPIO.HIGH)  # make trigger_pin output 10us HIGH level
-            time.sleep(0.00001)  # 10us
-            self.GPIO.output(self.trigger_pin, self.GPIO.LOW)  # make trigger_pin output LOW level
-            pingTime = self.pulseIn(self.echo_pin, self.GPIO.HIGH, self.timeOut)  # read plus time of echo_pin
-            distance_samples[i] = pingTime * 340.0 / 2.0 / 10000.0  # calculate distance with sound speed 340m/s
-        distance_samples = sorted(distance_samples)
-        return distance_samples[2]
+        return median(distance_samples)
 
 
     def client_on_connect(self, client, userdata, flags, return_code) -> bool:
@@ -112,7 +138,7 @@ class Ultrasonic(MqttDevice):
         return True
 
 
-    def client_on_message(self, client, userdata, msg):
+    def client_on_message(self, client, userdata, msg) -> None:
         """
         Event based callback when the ultrasonic sensor receives a message from MQTT broker.
         The types of messages received by the broker should reflect what is declared in the
@@ -143,7 +169,7 @@ class Ultrasonic(MqttDevice):
 
         while self.state == State.ON:
             time.sleep(freq)
-            distance = self.get_distance()
+            distance = self.calculate_distance()
             thread_count = threading.active_count()
 
             responses = [
@@ -151,8 +177,6 @@ class Ultrasonic(MqttDevice):
                 self.publish_data(self.publishers.threads, thread_count, timeout=1.0),
                 self.publish_data(self.publishers.status, self.state, timeout=1.0),
             ]
-
-            self.client.publish("device/motor/threads", 8)        # TEMPORARY FOR VISUALIZATION
 
             if False in responses:
                 self.state = State.OFF
@@ -164,3 +188,5 @@ class Ultrasonic(MqttDevice):
         possible to keep the sensor running without publishing data to the MQTT broker.
         """
         self._disconnect()
+        if self.env == Environment.PROD:
+            self.GPIO.cleanup()
