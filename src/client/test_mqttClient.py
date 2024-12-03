@@ -21,8 +21,7 @@ class TestTopics(unittest.TestCase):
 
 
     def tearDown(self) -> None:
-        self.device.client.loop_stop()
-        self.device.client.disconnect()
+        self.device.disconnect()
 
 
     def test_client_config_property_types(self):
@@ -74,6 +73,20 @@ class TestTopics(unittest.TestCase):
         """Tests the _connect_to_broker method of the MqttDevice class."""
 
         self.assertTrue(self.device._connect_to_broker())
+
+    def test_mqtt_device_disconnect(self):
+        """Test to ensure a device successfully disconnects from the MQTT broker."""
+
+        topics = Topics(UltrasonicPublishers(), UltrasonicSubscribers())
+        config = ClientConfig(topics=topics, host='mqtt-broker', port=1883)
+        device = MqttDevice(client_config=config)
+
+        device._connect_to_broker()
+        self.assertTrue(device.client.is_connected() == True)
+
+        device.disconnect()
+        self.assertTrue(device.client.is_connected() == False)
+
 
 
 if __name__ == "__main__":

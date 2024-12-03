@@ -83,25 +83,16 @@ class MqttDevice:
 
         Example: self.connected = if not connect_to_broker() (if there is no error, set to True)
         """
-        # # Connect to MQTT Client
-        # connection_err = self.client.connect(self.host, self.port)
-        # if connection_err:
-        #     return False
 
         try:
             self.client.connect(self.host, self.port)
-        except Exception:
-            raise ValueError("Connection to MQTT Broker failed. Ensure the mqtt-broker container is running `docker compose up -d mqtt-broker`.")
+            subscriptions = get_topics(self.subscribers)
+            self.client.subscribe(subscriptions)
+            self.client.loop_start()
 
-
-        # Subscribe to topics
-        subscriptions = get_topics(self.subscribers)
-        self.client.subscribe(subscriptions)
-
-        # Start Client
-        loop_error = self.client.loop_start()
-        if loop_error:
-            return False
+        except Exception as e:
+            self.disconnect()
+            raise e     # Raise the default/built in exceptions with Paho MQTT
 
         # return mqtt.MQTTErrorCode.MQTT_ERR_SUCCESS
         return True
@@ -143,3 +134,10 @@ class MqttDevice:
                 return False
 
         return True
+
+
+    def disconnect(self):
+        """Method to disconnect the client from the MQTT broker"""
+        if self.client.is_connected():
+                self.client.loop_stop()
+                self.client.disconnect()
