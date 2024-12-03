@@ -1,50 +1,75 @@
 import unittest
-import os
-
-# def add_nums(num1, num2) -> int:
-#     return num1 + num2
-
-# class TestMain(unittest.TestCase):
-
-#     def test_add_numbers(self):
-#         self.assertEqual(add_nums(1, 1), 2)
-
-#     def test_add_strings(self):
-#         self.assertEqual(add_nums('a','a'), 'aa')
-
+from client.topics import UltrasonicPublishers, UltrasonicSubscribers, Topics
+from client.mqtt_client import ClientConfig, Environment
+from ultrasonic import Ultrasonic
 
 class TestUltrasonic(unittest.TestCase):
-    """Test class for ultrasonic module and methods"""
+    """Tests for the Ultrasonic class."""
 
-    def setUp(self) -> None:
-        # set OS environ
-        return super().setUp()
+    def setUp(self):
 
-    def test_class_init(self):
-        pass
+        # Create Ultrasonic instance
+        publishers = UltrasonicPublishers()
+        subscribers = UltrasonicSubscribers()
+        topics = Topics(publishers, subscribers)
+        config = ClientConfig(topics=topics, host='mqtt-broker', port=1883)
+
+        # Use default parameters
+        self.device = Ultrasonic(client_config=config)
+
+    def tearDown(self):
+        self.device.stop()
+
+
+    def test_ultrasonic_property_types(self):
+        """Test for correct property types for the Ultrasonic class."""
+
+        self.assertIsInstance(self.device.trigger_pin, int)
+        self.assertIsInstance(self.device.echo_pin, int)
+        self.assertIsInstance(self.device.speed_conversion, float)
+
+
+    def test_ultrasonic_property_exists(self):
+        """Test to ensure Ultrasonic class has properties: trigger_pin, echo_pin, timeout, GPIO"""
+
+        self.assertTrue(hasattr(self.device, 'trigger_pin'), "Ultrasonic should have a 'trigger_pin' property")
+        self.assertTrue(hasattr(self.device, 'echo_pin'), "Ultrasonic should have a 'echo_pin' property")
+        self.assertTrue(hasattr(self.device, 'GPIO'), "Ultrasonic should have a 'GPIO' property")
+        self.assertTrue(hasattr(self.device, 'speed_conversion'), "Ultrasonic should have a 'speed_conversion' property")
 
     def test_gpio_setup(self):
         """
         This test covers GPIO setup at initialization depending on execution environment.
         Important for interfacing with physical hardware or running in a disconnected mode.
         """
-        # Set environ == DEV
-        # Set environ == PROD
-        pass
+        if self.device.env == Environment.PROD:
+            trig_stat = self.GPIO.gpio_function(self.device.trigger_pin)
+            echo_stat = self.GPIO.gpio_function(self.device.echo_pin)
 
-    def test_client_on_connect(self):
-        """Tests successful connection to MQTT broker."""
-        # If environ == DEV: return true
-        # If environ == PROD: execute method
-        pass
+            self.assertTrue(trig_stat)
+            self.assertTrue(echo_stat)
 
-    def test_client_on_message(self):
-        """Test case for when the ultrasonic sensor receives messages from the MQTT broker"""
-        # If environ == DEV: use Mock client to publish message
-        # If environ == PROD: use active broker to send message
-        pass
+        self.assertTrue(True)
 
-    def
+    def test_calculate_pulse_time(self):
+        """
+        Test to ensure pulse time returns correct values. This should only be tested
+        when running in PROD on the Raspberry Pi.
+        """
+
+        if self.device.env == Environment.PROD:
+            result = self.device.calculate_pulse_time()
+            self.assertIsInstance(result, float)
+
+        self.assertRaises(AttributeError, self.device.calculate_pulse_time)
+
+
+    def test_calculate_distance(self):
+        """Test to ensure correct type of value is returned when calculating the distance."""
+
+        result = self.device.calculate_distance()
+        self.assertIsInstance(result, float)
+
 
 if __name__ == '__main__':
     unittest.main()
