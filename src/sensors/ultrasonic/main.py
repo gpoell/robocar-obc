@@ -8,7 +8,7 @@ def main():
     subscribers = UltrasonicSubscribers()
     topics = Topics(publishers, subscribers)
     clientConfig = ClientConfig(topics, host="mqtt-broker", port=1883)
-    ultrasonic = Ultrasonic(clientConfig, trig=27, echo=22, maxDistance=300)
+    ultrasonic = Ultrasonic(clientConfig, trig=27, echo=22)
 
     try:
         ultrasonic.run(freq=0.05)
