@@ -3,3 +3,4 @@ max-line-length=125
 
 [MESSAGES CONTROL]
 disable=missing-module-docstring
+disable=import-error
