@@ -1,6 +1,6 @@
 import unittest
-from topics import Topics, Topic, Publishers, Subscribers, UltrasonicPublishers, UltrasonicSubscribers
-from mqtt_client import ClientConfig, MqttDevice, Connection
+from topics import Topics, Publishers, Subscribers, UltrasonicPublishers, UltrasonicSubscribers
+from mqtt_client import ClientConfig, MqttDevice, State, Environment
 
 class TestTopics(unittest.TestCase):
     """
@@ -10,7 +10,7 @@ class TestTopics(unittest.TestCase):
         Start the broker with `docker compose up -d mqtt-broker` (see docker-compose.yaml).
     """
 
-    def setUp(self) -> None:
+    def setUp(self):
 
         # Set up a mock MQTT Device
         publishers = UltrasonicPublishers()
@@ -20,8 +20,8 @@ class TestTopics(unittest.TestCase):
         self.device = MqttDevice(client_config=self.config)
 
 
-    def tearDown(self) -> None:
-        self.device.disconnect()
+    def tearDown(self):
+        self.device._disconnect()
 
 
     def test_client_config_property_types(self):
@@ -50,7 +50,8 @@ class TestTopics(unittest.TestCase):
         self.assertIsInstance(self.device.port, int)
         self.assertIsInstance(self.device.publishers, Publishers)
         self.assertIsInstance(self.device.subscribers, Subscribers)
-        self.assertIsInstance(self.device.connected, Connection)
+        self.assertIsInstance(self.device.state, State)
+        self.assertIsInstance(self.device.env, Environment)
 
         # Test bad ClientConfig parameter
         self.assertRaises(TypeError, MqttDevice, "client_config")
@@ -59,20 +60,31 @@ class TestTopics(unittest.TestCase):
 
 
     def test_mqtt_device_property_exists(self):
-        """Test to ensure MqttDevice contain properties: host, port, publishers, subscribers, connected, client"""
+        """Test to ensure MqttDevice contain properties: host, port, publishers, subscribers, state, client"""
 
-        self.assertTrue(hasattr(self.device, 'host'), "ClientConfig should have a 'host' property")
-        self.assertTrue(hasattr(self.device, 'port'), "ClientConfig should have a 'port' property")
-        self.assertTrue(hasattr(self.device, 'publishers'), "ClientConfig should have a 'publishers' property")
-        self.assertTrue(hasattr(self.device, 'subscribers'), "ClientConfig should have a 'subscribers' property")
-        self.assertTrue(hasattr(self.device, 'connected'), "ClientConfig should have a 'connected' property")
-        self.assertTrue(hasattr(self.device, 'client'), "ClientConfig should have a 'client' property")
+        self.assertTrue(hasattr(self.device, 'host'), "MQTT Devices should have a 'host' property")
+        self.assertTrue(hasattr(self.device, 'port'), "MQTT Devices should have a 'port' property")
+        self.assertTrue(hasattr(self.device, 'publishers'), "MQTT Devices should have a 'publishers' property")
+        self.assertTrue(hasattr(self.device, 'subscribers'), "MQTT Devices should have a 'subscribers' property")
+        self.assertTrue(hasattr(self.device, 'state'), "MQTT Devices should have a 'state' property")
+        self.assertTrue(hasattr(self.device, 'client'), "MQTT Devices should have a 'client' property")
+        self.assertTrue(hasattr(self.device, 'env'), "MQTT Devices should have a 'env' property")
 
 
     def test_mqtt_device_connect_to_broker(self):
         """Tests the _connect_to_broker method of the MqttDevice class."""
 
-        self.assertTrue(self.device._connect_to_broker())
+        # State should be OFF before connecting
+        self.assertIs(self.device.state, State.OFF)
+
+        # State should be ON after connecting
+        self.device._connect_to_broker()
+        self.assertIs(self.device.state, State.ON)
+
+        # State should be OFF after disconnecting
+        self.device._disconnect()
+        self.assertIs(self.device.state, State.OFF)
+
 
     def test_mqtt_device_disconnect(self):
         """Test to ensure a device successfully disconnects from the MQTT broker."""
@@ -82,11 +94,10 @@ class TestTopics(unittest.TestCase):
         device = MqttDevice(client_config=config)
 
         device._connect_to_broker()
-        self.assertTrue(device.client.is_connected() == True)
+        self.assertIs(device.state, State.ON)
 
-        device.disconnect()
-        self.assertTrue(device.client.is_connected() == False)
-
+        device._disconnect()
+        self.assertIs(device.state, State.OFF)
 
 
 if __name__ == "__main__":

@@ -1,8 +1,14 @@
 import paho.mqtt.client as mqtt
-from enum import IntEnum
-from topics import Topics, Topic, get_topics
+import os
+from enum import Enum, IntEnum
+from client.topics import Topics, Topic, get_topics
+# from topics import Topics, Topic, get_topics      # Uncomment for testing
 
-class Connection(IntEnum):
+class Environment(Enum):
+    DEV = 0
+    PROD = 1
+
+class State(IntEnum):
     OFF = 0
     ON = 1
 
@@ -70,11 +76,22 @@ class MqttDevice:
         self.port = client_config.port
         self.publishers = client_config.topics.publishers
         self.subscribers = client_config.topics.subscribers
-        self.connected = Connection.OFF
+        self.state = State.OFF
         self.client = mqtt.Client()
+        self.env = self._set_environment()
+
+    def _set_environment(self) -> Environment:
+        """
+        Method to set the environment state for each device to drive environment specific behavior.
+        For example, the Ultrasonic sensor requires the GPIO library which can only be imported
+        when the container is running on the physical hardware.
+        """
+        if os.environ["ENVIRON"] == "PROD":
+            return Environment.PROD
+        return Environment.DEV
 
 
-    def _connect_to_broker(self) -> bool:    # Future state will raise exceptions with custom class
+    def _connect_to_broker(self) -> None:    # Future state will raise exceptions with custom class
         """
         This method encapsulates functionality for connecting to the MQTT broker, subsribing to topics,
         and starting the client event loop, returning a MQTTErrorCode that is used to set the connection status of the device.
@@ -85,17 +102,19 @@ class MqttDevice:
         """
 
         try:
+            # Connect to the broker, subscribe to topics, and start event loop
             self.client.connect(self.host, self.port)
             subscriptions = get_topics(self.subscribers)
             self.client.subscribe(subscriptions)
             self.client.loop_start()
 
         except Exception as e:
+            # Disconnect on any error and raise built in exception (future state fix ambiguity)
             self.disconnect()
-            raise e     # Raise the default/built in exceptions with Paho MQTT
+            raise e
 
-        # return mqtt.MQTTErrorCode.MQTT_ERR_SUCCESS
-        return True
+        # Turn device on
+        self.state = State.ON
 
 
     def publish_data(self, topic: Topic, message, timeout=1.0):
@@ -136,8 +155,13 @@ class MqttDevice:
         return True
 
 
-    def disconnect(self):
-        """Method to disconnect the client from the MQTT broker"""
+    def _disconnect(self) -> None:
+        """
+        Method to disconnect the client from the MQTT broker. Ensures the state is set to OFF
+        and is published to the broker to enform the state machine, and disconnects the client.
+        """
+        self.state = State.OFF
         if self.client.is_connected():
+                self.publish_data(self.publishers.status, self.state, timeout=1.0),
                 self.client.loop_stop()
                 self.client.disconnect()
