@@ -9,7 +9,7 @@ services:
     environment:
       - ENVIRON=${ENVIRON}
 
-  
+
   motor:
     build: ./src/motor
     tty: true
@@ -27,6 +27,8 @@ services:
     container_name: sensor-ultrasonic
     volumes:
       - ./src/sensors/ultrasonic:/app
+      - ./src/client:/app/client
+
     working_dir: /app
     privileged: true
     environment:
