@@ -10,6 +10,7 @@ class Motor:
         self.time_proportion = 2.5  # Depend on your own car,If you want to get the best out of the rotation mode,
         # change the value by experimenting.
         self.adc = Adc()
+        self.myVar = 0
 
     @staticmethod
     def duty_range(duty1, duty2, duty3, duty4):
@@ -103,7 +104,7 @@ class Motor:
             print("rotating")
             time.sleep(5 * self.time_proportion * bat_compensate / 1000)
             angle -= 5
-    
+
     def test(self):
         self.setMotorModel(2000, 2000, 2000, 2000)  # Forward
         time.sleep(3)
