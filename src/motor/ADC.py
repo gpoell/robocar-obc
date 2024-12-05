@@ -124,7 +124,7 @@ class Adc:
         return self.voltage(AdcChannel.BATTERY) * 3
 
 
-    def close(self):
+    def close(self) -> None:
         """Closes the I2C bus"""
         self.i2c_bus.close()
 
