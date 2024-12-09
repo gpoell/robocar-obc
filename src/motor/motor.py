@@ -4,6 +4,21 @@ from PCA9685 import PCA9685
 from ADC import Adc
 
 class Motor:
+    """
+    This class contains methods for operating the motor of the vehicle (driving forward, backward
+    and turning.). It is comprised of the ADC and PCA9685 (PWM) for determining rotation angles and
+    supplying power to the DC motors through PWM duty cycles.
+
+    The vehicle is primarily driven through the set_motor_model which requires positive or negative
+    integers representing the PWM duty cycle and direction (positive or negative values). For
+    example:
+
+    set_motor_model(2000, 2000, 2000, 2000) -> Forward
+    set_motor_model(-2000, -2000, -2000, -2000) -> Backward
+    set_motor_model(-500, -500, 2000, 2000) -> Turn Left
+
+    """
+
     def __init__(
         self,
         rotation_delay: float = 2.5,
@@ -48,58 +63,97 @@ class Motor:
             duty4 = -4095
         return duty1, duty2, duty3, duty4
 
-    def left_Upper_Wheel(self, duty):
+
+    def left_upper_wheel(self, duty: int) -> None:
+        """
+        Determines the direction and sets the PWM duty cycle for the Left Upper Wheel
+        """
+
         if duty > 0:
             self.pwm.setMotorPwm(0, 0)
             self.pwm.setMotorPwm(1, duty)
+
         elif duty < 0:
             self.pwm.setMotorPwm(1, 0)
             self.pwm.setMotorPwm(0, abs(duty))
+
         else:
             self.pwm.setMotorPwm(0, 4095)
             self.pwm.setMotorPwm(1, 4095)
 
-    def left_Lower_Wheel(self, duty):
+
+    def left_lower_wheel(self, duty: int) -> None:
+        """
+        Determines the direction and sets the PWM duty cycle for the Left Lower Wheel
+        """
+
         if duty > 0:
             self.pwm.setMotorPwm(3, 0)
             self.pwm.setMotorPwm(2, duty)
+
         elif duty < 0:
             self.pwm.setMotorPwm(2, 0)
             self.pwm.setMotorPwm(3, abs(duty))
+
         else:
             self.pwm.setMotorPwm(2, 4095)
             self.pwm.setMotorPwm(3, 4095)
 
-    def right_Upper_Wheel(self, duty):
+
+    def right_upper_wheel(self, duty: int) -> None:
+        """
+        Determines the direction and sets the PWM duty cycle for the Left Upper Wheel
+        """
+
         if duty > 0:
             self.pwm.setMotorPwm(6, 0)
             self.pwm.setMotorPwm(7, duty)
+
         elif duty < 0:
             self.pwm.setMotorPwm(7, 0)
             self.pwm.setMotorPwm(6, abs(duty))
+
         else:
             self.pwm.setMotorPwm(6, 4095)
             self.pwm.setMotorPwm(7, 4095)
 
-    def right_Lower_Wheel(self, duty):
+
+    def right_lower_wheel(self, duty: int) -> None:
+        """
+        Determines the direction and sets the PWM duty cycle for the Left Upper Wheel
+        """
+
         if duty > 0:
             self.pwm.setMotorPwm(4, 0)
             self.pwm.setMotorPwm(5, duty)
+
         elif duty < 0:
             self.pwm.setMotorPwm(5, 0)
             self.pwm.setMotorPwm(4, abs(duty))
+
         else:
             self.pwm.setMotorPwm(4, 4095)
             self.pwm.setMotorPwm(5, 4095)
 
-    def setMotorModel(self, duty1, duty2, duty3, duty4):
-        duty1, duty2, duty3, duty4 = self.duty_range(duty1, duty2, duty3, duty4)
-        self.left_Upper_Wheel(duty1)
-        self.left_Lower_Wheel(duty2)
-        self.right_Upper_Wheel(duty3)
-        self.right_Lower_Wheel(duty4)
 
-    def Rotate(self, n):
+    def set_motor_model(self, duty1: int, duty2: int, duty3: int, duty4: int) -> None:
+        """
+        Entry level method for setting the Motor Model, determining the speed and direction
+        of the vehicle.
+        """
+
+        duty1, duty2, duty3, duty4 = self.duty_range(duty1, duty2, duty3, duty4)
+        self.left_upper_wheel(duty1)
+        self.left_upper_wheel(duty2)
+        self.right_upper_wheel(duty3)
+        self.right_lower_wheel(duty4)
+
+
+    def __rotate(self, n):
+        """
+        DO NOT USE YET: Method for turning the vehicle based on a given angle?
+        """
+
         angle = n
         bat_compensate = 7.5 / (self.adc.recvADC(2) * 3)
         while True:
@@ -118,46 +172,28 @@ class Motor:
             time.sleep(5 * self.rotation_delay = rotation_delay * bat_compensate / 1000)
             angle -= 5
 
-    def test(self):
-        self.setMotorModel(2000, 2000, 2000, 2000)  # Forward
-        time.sleep(3)
-        self.setMotorModel(-2000, -2000, -2000, -2000)  # Back
-        time.sleep(3)
-        self.setMotorModel(-500, -500, 2000, 2000)  # Left
-        time.sleep(3)
-        self.setMotorModel(2000, 2000, -500, -500)  # Right
-        time.sleep(3)
-        self.setMotorModel(0, 0, 0, 0)  # Stop
 
-    def destroy(self):
-        self.setMotorModel(0, 0, 0, 0)
+    def stop(self) -> None:
+        """
+        Stops the vehicle by resetting the PWM duty cycle power supply.
+        """
+        self.set_motor_model(0, 0, 0, 0)
+        self.pwm.close()
 
-
-
-# PWM = Motor()
-
-
-# def loop():
-#     PWM.setMotorModel(2000, 2000, 2000, 2000)  # Forward
-#     time.sleep(3)
-#     PWM.setMotorModel(-2000, -2000, -2000, -2000)  # Back
-#     time.sleep(3)
-#     PWM.setMotorModel(-500, -500, 2000, 2000)  # Left
-#     time.sleep(3)
-#     PWM.setMotorModel(2000, 2000, -500, -500)  # Right
-#     time.sleep(3)
-#     PWM.setMotorModel(0, 0, 0, 0)  # Stop
-
-
-# def destroy():
-#     PWM.setMotorModel(0, 0, 0, 0)
 
 
 if __name__ == '__main__':
     motor = Motor()
     try:
-        motor.test()
-        # loop()
-    except KeyboardInterrupt:  # When 'Ctrl+C' is pressed, the child program destroy() will be  executed.
-        # destroy()
-        motor.destroy()
+        motor.set_motor_model(2000, 2000, 2000, 2000)  # Forward
+        time.sleep(3)
+        motor.set_motor_model(-2000, -2000, -2000, -2000)  # Back
+        time.sleep(3)
+        motor.set_motor_model(-500, -500, 2000, 2000)  # Left
+        time.sleep(3)
+        motor.set_motor_model(2000, 2000, -500, -500)  # Right
+        time.sleep(3)
+        motor.stop()    # Stop
+
+    except KeyboardInterrupt:
+        motor.stop()
