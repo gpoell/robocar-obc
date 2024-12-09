@@ -70,16 +70,16 @@ class Motor:
         """
 
         if duty > 0:
-            self.pwm.setMotorPwm(0, 0)
-            self.pwm.setMotorPwm(1, duty)
+            self.pwm.set_motor_pwm(0, 0)
+            self.pwm.set_motor_pwm(1, duty)
 
         elif duty < 0:
-            self.pwm.setMotorPwm(1, 0)
-            self.pwm.setMotorPwm(0, abs(duty))
+            self.pwm.set_motor_pwm(1, 0)
+            self.pwm.set_motor_pwm(0, abs(duty))
 
         else:
-            self.pwm.setMotorPwm(0, 4095)
-            self.pwm.setMotorPwm(1, 4095)
+            self.pwm.set_motor_pwm(0, 0)
+            self.pwm.set_motor_pwm(1, 0)
 
 
     def left_lower_wheel(self, duty: int) -> None:
@@ -88,16 +88,16 @@ class Motor:
         """
 
         if duty > 0:
-            self.pwm.setMotorPwm(3, 0)
-            self.pwm.setMotorPwm(2, duty)
+            self.pwm.set_motor_pwm(3, 0)
+            self.pwm.set_motor_pwm(2, duty)
 
         elif duty < 0:
-            self.pwm.setMotorPwm(2, 0)
-            self.pwm.setMotorPwm(3, abs(duty))
+            self.pwm.set_motor_pwm(2, 0)
+            self.pwm.set_motor_pwm(3, abs(duty))
 
         else:
-            self.pwm.setMotorPwm(2, 4095)
-            self.pwm.setMotorPwm(3, 4095)
+            self.pwm.set_motor_pwm(2, 0)
+            self.pwm.set_motor_pwm(3, 0)
 
 
     def right_upper_wheel(self, duty: int) -> None:
@@ -106,16 +106,16 @@ class Motor:
         """
 
         if duty > 0:
-            self.pwm.setMotorPwm(6, 0)
-            self.pwm.setMotorPwm(7, duty)
+            self.pwm.set_motor_pwm(6, 0)
+            self.pwm.set_motor_pwm(7, duty)
 
         elif duty < 0:
-            self.pwm.setMotorPwm(7, 0)
-            self.pwm.setMotorPwm(6, abs(duty))
+            self.pwm.set_motor_pwm(7, 0)
+            self.pwm.set_motor_pwm(6, abs(duty))
 
         else:
-            self.pwm.setMotorPwm(6, 4095)
-            self.pwm.setMotorPwm(7, 4095)
+            self.pwm.set_motor_pwm(6, 0)
+            self.pwm.set_motor_pwm(7, 0)
 
 
     def right_lower_wheel(self, duty: int) -> None:
@@ -124,16 +124,16 @@ class Motor:
         """
 
         if duty > 0:
-            self.pwm.setMotorPwm(4, 0)
-            self.pwm.setMotorPwm(5, duty)
+            self.pwm.set_motor_pwm(4, 0)
+            self.pwm.set_motor_pwm(5, duty)
 
         elif duty < 0:
-            self.pwm.setMotorPwm(5, 0)
-            self.pwm.setMotorPwm(4, abs(duty))
+            self.pwm.set_motor_pwm(5, 0)
+            self.pwm.set_motor_pwm(4, abs(duty))
 
         else:
-            self.pwm.setMotorPwm(4, 4095)
-            self.pwm.setMotorPwm(5, 4095)
+            self.pwm.set_motor_pwm(4, 0)
+            self.pwm.set_motor_pwm(5, 0)
 
 
     def set_motor_model(self, duty1: int, duty2: int, duty3: int, duty4: int) -> None:
@@ -144,33 +144,33 @@ class Motor:
 
         duty1, duty2, duty3, duty4 = self.duty_range(duty1, duty2, duty3, duty4)
         self.left_upper_wheel(duty1)
-        self.left_upper_wheel(duty2)
+        self.left_lower_wheel(duty2)
         self.right_upper_wheel(duty3)
         self.right_lower_wheel(duty4)
 
 
-    def __rotate(self, n):
-        """
-        DO NOT USE YET: Method for turning the vehicle based on a given angle?
-        """
+    # def __rotate(self, n):
+    #     """
+    #     DO NOT USE YET: Method for turning the vehicle based on a given angle?
+    #     """
 
-        angle = n
-        bat_compensate = 7.5 / (self.adc.recvADC(2) * 3)
-        while True:
-            W = 2000
+    #     angle = n
+    #     bat_compensate = 7.5 / (self.adc.recvADC(2) * 3)
+    #     while True:
+    #         W = 2000
 
-            VY = int(2000 * math.cos(math.radians(angle)))
-            VX = -int(2000 * math.sin(math.radians(angle)))
+    #         VY = int(2000 * math.cos(math.radians(angle)))
+    #         VX = -int(2000 * math.sin(math.radians(angle)))
 
-            FR = VY - VX + W
-            FL = VY + VX - W
-            BL = VY - VX - W
-            BR = VY + VX + W
+    #         FR = VY - VX + W
+    #         FL = VY + VX - W
+    #         BL = VY - VX - W
+    #         BR = VY + VX + W
 
-            PWM.setMotorModel(FL, BL, FR, BR)
-            print("rotating")
-            time.sleep(5 * self.rotation_delay = rotation_delay * bat_compensate / 1000)
-            angle -= 5
+    #         PWM.setMotorModel(FL, BL, FR, BR)
+    #         print("rotating")
+    #         time.sleep(5 * self.rotation_delay = rotation_delay * bat_compensate / 1000)
+    #         angle -= 5
 
 
     def stop(self) -> None:
@@ -185,14 +185,14 @@ class Motor:
 if __name__ == '__main__':
     motor = Motor()
     try:
-        motor.set_motor_model(2000, 2000, 2000, 2000)  # Forward
-        time.sleep(3)
-        motor.set_motor_model(-2000, -2000, -2000, -2000)  # Back
-        time.sleep(3)
-        motor.set_motor_model(-500, -500, 2000, 2000)  # Left
-        time.sleep(3)
-        motor.set_motor_model(2000, 2000, -500, -500)  # Right
-        time.sleep(3)
+        motor.set_motor_model(-2000, -2000, -2000, -2000)  # Forward
+        time.sleep(1)
+        motor.set_motor_model(2000, 2000, 2000, 2000)  # Back
+        time.sleep(1)
+        motor.set_motor_model(-4000, -4000, 2000, 2000)  # Right
+        time.sleep(1)
+        motor.set_motor_model(4000, 4000, -2000, -2000)  # Left
+        time.sleep(2)
         motor.stop()    # Stop
 
     except KeyboardInterrupt:
