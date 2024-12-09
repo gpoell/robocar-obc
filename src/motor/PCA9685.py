@@ -48,6 +48,11 @@ class PCA9685:
         self.write(self.__MODE1, 0x00)
         self.set_pwm_freq(self.frequency)
 
+    def close(self) -> None:
+        """Method to close the serial bus."""
+
+        self.bus.close()
+
     def duty_range(self, duty_cycle: int) -> int:
         """Returns a PWM duty cycle within the 12-bit (4095) resolution range"""
         if duty_cycle > self.resolution:
