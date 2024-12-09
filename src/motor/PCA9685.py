@@ -42,8 +42,21 @@ class PCA9685:
         self.address = address
         self.frequency = frequency
         self.debug = debug
+        self.resolution = 4095  # 12-bit resolution
+
+        # Set the default PWM frequency
         self.write(self.__MODE1, 0x00)
-        self._set_pwm_freq(self.frequency)
+        self.set_pwm_freq(self.frequency)
+
+    def duty_range(self, duty_cycle: int) -> int:
+        """Returns a PWM duty cycle within the 12-bit (4095) resolution range"""
+        if duty_cycle > self.resolution:
+            return self.resolution
+
+        if duty_cycle < -self.resolution:
+            return -self.resolution
+
+        return duty_cycle
 
 
     def read(self, register: int) -> int:
@@ -52,11 +65,11 @@ class PCA9685:
         return result
 
 
-    def _set_pwm_freq(self, freq: int) -> None:
+    def set_pwm_freq(self, freq: int) -> None:
         "Sets the PWM frequency. Default appears to be 50 Hz."
 
-        prescaleval = 25000000.0    # 25MHz
-        prescaleval /= 4096.0       # 12-bit
+        prescaleval = 25000000.0        # 25MHz
+        prescaleval /= self.resolution  # 12-bit
         prescaleval /= float(freq)
         prescaleval -= 1.0
         prescale = math.floor(prescaleval + 0.5)
