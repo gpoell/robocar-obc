@@ -1,16 +1,29 @@
 import math
-from PCA9685 import PCA9685
-from ADC import *
 import time
+from PCA9685 import PCA9685
+from ADC import Adc
 
 class Motor:
-    def __init__(self):
-        self.pwm = PCA9685(0x40, debug=True)
-        self.pwm.setPWMFreq(50)
-        self.time_proportion = 2.5  # Depend on your own car,If you want to get the best out of the rotation mode,
-        # change the value by experimenting.
+    def __init__(
+        self,
+        rotation_delay: float = 2.5,
+        pwm_address: int = 0x40,
+        pwm_frequency: int = 50
+    ) -> None:
+
+        if not isinstance(rotation_delay, (float, int)):
+            raise TypeError("Supported types for rotation delay are: <float>, <int>")
+
+        if not isinstance(pwm_address, (int)):
+            raise TypeError("Supported types for the PWM address are: <int>")
+
+        if not isinstance(pwm_address, (int)):
+            raise TypeError("Supported types for the PWM frequency are: <int>")
+
+
+        self.rotation_delay = rotation_delay
+        self.pwm = PCA9685(pwm_address, pwm_frequency)
         self.adc = Adc()
-        self.myVar = 0
 
     @staticmethod
     def duty_range(duty1, duty2, duty3, duty4):
@@ -102,7 +115,7 @@ class Motor:
 
             PWM.setMotorModel(FL, BL, FR, BR)
             print("rotating")
-            time.sleep(5 * self.time_proportion * bat_compensate / 1000)
+            time.sleep(5 * self.rotation_delay = rotation_delay * bat_compensate / 1000)
             angle -= 5
 
     def test(self):
