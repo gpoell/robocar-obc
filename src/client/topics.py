@@ -125,6 +125,7 @@ class MotorSubscribers(Subscribers):
     """
 
     appStatus: Topic = Topic(topic="app/status", qos=1)
+    ultrasonicDistance: Topic = Topic(topic=UltrasonicPublishers.distance, qos=1)
 
 
 def get_topics(topics: Union[Publishers, Subscribers]) -> list[tuple]:

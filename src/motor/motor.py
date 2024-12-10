@@ -3,6 +3,7 @@ import time
 from enum import IntEnum
 from PCA9685 import PCA9685
 from ADC import Adc
+from client.mqtt_client import MqttDevice, ClientConfig, State
 
 class MotorChannels(IntEnum):
     """
@@ -18,11 +19,13 @@ class MotorChannels(IntEnum):
     RIGHT_UPPER_REVERSE = 7
 
 
-class Motor:
+class Motor(MqttDevice):
     """
     This class contains methods for operating the motor of the vehicle (driving forward, backward
     and turning.). It is comprised of the ADC and PCA9685 (PWM) for determining rotation angles and
-    supplying power to the DC motors through PWM duty cycles.
+    supplying power to the DC motors through PWM duty cycles, and it inherits from the MqttDevice
+    class so it can make event based decisions based on topics (i.e. obstacle avoidance given
+    distances from the Ultrasonic sensor.)
 
     The vehicle uses Differential Steering - a mechanism used to control the speed of independently
     powered wheels to turn the vehicle. During a turn, the wheels on the outer side of the turn must
@@ -30,22 +33,30 @@ class Motor:
     at different speeds, ensuring smooth and efficient turning without wheel slippage or strain on
     the drivetrain.
 
-    The vehicle is primarily driven through the set_motor_model which requires positive or negative
-    integers representing the PWM duty cycle and direction (positive or negative values). For
-    example:
+    Several methods are used to drive the vehicle. The set_motor_model() is the underlining method
+    providing the most flexibility for defining speed and direction, and additional higher level
+    methods (i.e. drive, reverse, drive_left, etc...) are available to simplify PWM duty logic.
+    All of these methods require 12-bit (0-4095) signed integer values to power the motors for each
+    wheel. For example:
 
     set_motor_model(2000, 2000, 2000, 2000) -> Forward
     set_motor_model(-2000, -2000, -2000, -2000) -> Backward
-    set_motor_model(-500, -500, 2000, 2000) -> Turn Left
+    set_motor_model(50, 50, 2000, 2000) -> Turn Left
+    drive(2000) -> Forward (all 4 wheels)
+    reverse_right(4095, 50) -> Reverse to the Right
 
     """
 
     def __init__(
         self,
+        client_config: ClientConfig,
         rotation_delay: float = 2.5,
         pwm_address: int = 0x40,
         pwm_frequency: int = 50
     ) -> None:
+
+        if not isinstance(client_config, ClientConfig):
+            raise TypeError("Supported types for client_config are: <ClientConfig>")
 
         if not isinstance(rotation_delay, (float, int)):
             raise TypeError("Supported types for rotation delay are: <float>, <int>")
@@ -57,9 +68,74 @@ class Motor:
             raise TypeError("Supported types for the PWM frequency are: <int>")
 
 
+        super().__init__(client_config)
+
         self.rotation_delay = rotation_delay
         self.pwm = PCA9685(pwm_address, pwm_frequency)
         self.adc = Adc()
+        self.distance = 0      # Temporarily track distances from ultrasonic sensor
+
+
+    def client_on_connect(self, client, userdata, flags, return_code) -> None:
+        """Client callback when ultrasonic sensor connects to MQTT broker. Temporary placehoder"""
+        if return_code != 0:
+            raise ValueError("Could not connect to MQTT Broker, return code:", return_code)
+
+        print("Motor is connected to the MQTT Broker...")
+
+
+    def client_on_message(self, client, userdata, msg) -> None:
+        """
+        Event based callback when receiving messages from the MQTT broker.
+        The types of messages received by the broker should reflect what is declared in the
+        Subscribers datatype.
+
+        :param client: reference to client instance connected to MQTT broker.
+        :param userdata: <TBD>
+        :param msg: incoming message from MQTT Broker.
+        """
+        message = msg.payload.decode()
+        topic = msg.topic
+
+        if topic == self.subscribers.appStatus and message != "active":
+            self.state = State.OFF
+
+        # Temporarily capture distance from Ultrasonic Sensor
+        # I think future state should let the State Machine interpret distances and drive behavior
+        if topic == self.subscribers.ultrasonicDistance:
+            self.distance = float(message)
+
+
+
+    # This method is being deprecated - logic belongs to the PCA9685 class which owns the resolution
+    @staticmethod
+    def duty_range(duty1, duty2, duty3, duty4):
+        """
+        Limits the duty cycle range to 12-bit resolution of the PWM.
+        Currently used by set_motor_model()
+        """
+
+        if duty1 > 4095:
+            duty1 = 4095
+        elif duty1 < -4095:
+            duty1 = -4095
+
+        if duty2 > 4095:
+            duty2 = 4095
+        elif duty2 < -4095:
+            duty2 = -4095
+
+        if duty3 > 4095:
+            duty3 = 4095
+        elif duty3 < -4095:
+            duty3 = -4095
+
+        if duty4 > 4095:
+            duty4 = 4095
+        elif duty4 < -4095:
+            duty4 = -4095
+
+        return duty1, duty2, duty3, duty4
 
 
     def drive(self, pwm_duty: int) -> None:
@@ -72,18 +148,6 @@ class Motor:
         pwm_duty = abs(pwm_duty)
 
         self.set_motor_model(pwm_duty, pwm_duty, pwm_duty, pwm_duty)
-
-
-    def reverse(self, pwm_duty: int) -> None:
-        """
-        Provide a positive PWM duty cycle to reverse the vehicle
-        by supplying consistent power to all 4 wheels.
-        """
-
-        # Ensure positive PWM duty cycle to handle direction
-        pwm_duty = abs(pwm_duty)
-
-        self.set_motor_model(-pwm_duty, -pwm_duty, -pwm_duty, -pwm_duty)
 
 
     def drive_left(self, left_wheels_duty: int, right_wheels_duty: int) -> None:
@@ -118,6 +182,18 @@ class Motor:
         self.set_motor_model(left_wheels_duty, left_wheels_duty, right_wheels_duty, right_wheels_duty)
 
 
+    def reverse(self, pwm_duty: int) -> None:
+        """
+        Provide a positive PWM duty cycle to reverse the vehicle
+        by supplying consistent power to all 4 wheels.
+        """
+
+        # Ensure positive PWM duty cycle to handle direction
+        pwm_duty = abs(pwm_duty)
+
+        self.set_motor_model(-pwm_duty, -pwm_duty, -pwm_duty, -pwm_duty)
+
+
     def reverse_left(self, left_wheels_duty: int, right_wheels_duty: int) -> None:
         """
         Provide positive PWM duty cycles to reverse the vehicle to the left by supplying higher power to the right
@@ -148,30 +224,6 @@ class Motor:
             raise ValueError("Reversing to the right requires higher PWM duty cycles for the left wheels.")
 
         self.set_motor_model(-left_wheels_duty, -left_wheels_duty, -right_wheels_duty, -right_wheels_duty)
-
-
-    @staticmethod
-    def duty_range(duty1, duty2, duty3, duty4):
-        if duty1 > 4095:
-            duty1 = 4095
-        elif duty1 < -4095:
-            duty1 = -4095
-
-        if duty2 > 4095:
-            duty2 = 4095
-        elif duty2 < -4095:
-            duty2 = -4095
-
-        if duty3 > 4095:
-            duty3 = 4095
-        elif duty3 < -4095:
-            duty3 = -4095
-
-        if duty4 > 4095:
-            duty4 = 4095
-        elif duty4 < -4095:
-            duty4 = -4095
-        return duty1, duty2, duty3, duty4
 
 
     def left_upper_wheel(self, duty: int) -> None:
