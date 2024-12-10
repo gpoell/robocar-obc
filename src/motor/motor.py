@@ -297,6 +297,25 @@ class Motor:
         self.pwm.close()
 
 
+    def turn_around(self, turn_cycles: int=8) -> None:
+        """
+        (Testing) Turns the vehicle approximately 180 degrees.
+        Multiple variables such as floor friction and differential speed ratios
+        impact the turning radius.
+
+        This method requires calibration. Currently, 4 turn cycle results in a 90
+        degree turn, so 8 cycles is 180 degrees.
+        """
+
+        for _ in turn_cycles:
+            self.drive_left(50, 4095)
+            time.sleep(0.5)
+            self.reverse_right(4095, 50)
+            time.sleep(0.5)
+
+        self.set_motor_model(0, 0, 0, 0)
+
+
 
 if __name__ == '__main__':
     motor = Motor()
@@ -309,6 +328,7 @@ if __name__ == '__main__':
         time.sleep(2)
         motor.set_motor_model(50, 50, 4000, 4000)  # Left
         time.sleep(2)
+        motor.turn_around(turn_cycles=8)    # Spin 180 degrees
         motor.stop()    # Stop
 
     except KeyboardInterrupt:
