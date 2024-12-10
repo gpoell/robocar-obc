@@ -61,16 +61,93 @@ class Motor:
         self.pwm = PCA9685(pwm_address, pwm_frequency)
         self.adc = Adc()
 
+
     def drive(self, pwm_duty: int) -> None:
         """
-        Drives the vehicle forward by supplying consistent power to
-        all 4 wheels of the vehicle through PWM duty cycle ratios.
+        Provide a positive PWM duty cycle to drive the vehicle forward
+        by supplying consistent power to all 4 wheels.
         """
 
-        # Future state - PWM ratios should be used instead of exact values
-        # if pwm_duty < 0 or pwm_duty > 1:
-        #     raise ValueError("PWM Duty cycle ratios must be between 0 and 1")
+        # Ensure positive PWM duty cycle to handle direction
+        pwm_duty = abs(pwm_duty)
 
+        self.set_motor_model(pwm_duty, pwm_duty, pwm_duty, pwm_duty)
+
+
+    def reverse(self, pwm_duty: int) -> None:
+        """
+        Provide a positive PWM duty cycle to reverse the vehicle
+        by supplying consistent power to all 4 wheels.
+        """
+
+        # Ensure positive PWM duty cycle to handle direction
+        pwm_duty = abs(pwm_duty)
+
+        self.set_motor_model(-pwm_duty, -pwm_duty, -pwm_duty, -pwm_duty)
+
+
+    def drive_left(self, left_wheels_duty: int, right_wheels_duty: int) -> None:
+        """
+        Provide positive PWM duty cycles to drive the vehicle to the left by supplying higher power to the right
+        wheels and lower power to the left wheels.
+        """
+
+        # Ensure positive PWM duty cycle to handle direction
+        left_wheels_duty = abs(left_wheels_duty)
+        right_wheels_duty = abs(right_wheels_duty)
+
+        if right_wheels_duty < left_wheels_duty:
+            raise ValueError("Driving to the left requires higher PWM duty cycles for the right wheels.")
+
+        self.set_motor_model(left_wheels_duty, left_wheels_duty, right_wheels_duty, right_wheels_duty)
+
+
+    def drive_right(self, left_wheels_duty: int, right_wheels_duty: int) -> None:
+        """
+        Provide positive PWM duty cycles to drive the vehicle to the right by supplying higher power to the right
+        wheels and lower power to the left wheels.
+        """
+
+        # Ensure positive PWM duty cycle to handle direction
+        left_wheels_duty = abs(left_wheels_duty)
+        right_wheels_duty = abs(right_wheels_duty)
+
+        if right_wheels_duty > left_wheels_duty:
+            raise ValueError("Driving to the right requires higher PWM duty cycles for the left wheels.")
+
+        self.set_motor_model(left_wheels_duty, left_wheels_duty, right_wheels_duty, right_wheels_duty)
+
+
+    def reverse_left(self, left_wheels_duty: int, right_wheels_duty: int) -> None:
+        """
+        Provide positive PWM duty cycles to reverse the vehicle to the left by supplying higher power to the right
+        wheels and lower power to the left wheels.
+        """
+
+        # Ensure positive PWM duty cycle to handle direction
+        left_wheels_duty = abs(left_wheels_duty)
+        right_wheels_duty = abs(right_wheels_duty)
+
+        if right_wheels_duty < left_wheels_duty:
+            raise ValueError("Reversing to the left requires higher PWM duty cycles for the right wheels.")
+
+        self.set_motor_model(-left_wheels_duty, -left_wheels_duty, -right_wheels_duty, -right_wheels_duty)
+
+
+    def reverse_right(self, left_wheels_duty: int, right_wheels_duty: int) -> None:
+        """
+        Provide positive PWM duty cycles to reverse the vehicle to the right by supplying higher power to the left
+        wheels and lower power to the right wheels.
+        """
+
+        # Ensure positive PWM duty cycle to handle direction
+        left_wheels_duty = abs(left_wheels_duty)
+        right_wheels_duty = abs(right_wheels_duty)
+
+        if right_wheels_duty > left_wheels_duty:
+            raise ValueError("Reversing to the right requires higher PWM duty cycles for the left wheels.")
+
+        self.set_motor_model(-left_wheels_duty, -left_wheels_duty, -right_wheels_duty, -right_wheels_duty)
 
 
     @staticmethod
@@ -169,18 +246,23 @@ class Motor:
             self.pwm.set_motor_pwm(MotorChannels.RIGHT_UPPER_FORWARD, 0)
 
 
-
-    def set_motor_model(self, duty1: int, duty2: int, duty3: int, duty4: int) -> None:
+    def set_motor_model(
+        self,
+        left_upper_duty: int,
+        left_lower_duty: int,
+        right_upper_duty: int,
+        right_lower_duty: int
+    ) -> None:
         """
-        Entry level method for setting the Motor Model, determining the speed and direction
-        of the vehicle.
+        Sets the speed and direction of the vehicle by providing PWM duty cycles
+        for all of the wheels.
         """
 
-        duty1, duty2, duty3, duty4 = self.duty_range(duty1, duty2, duty3, duty4)
-        self.left_upper_wheel(duty1)
-        self.left_lower_wheel(duty2)
-        self.right_upper_wheel(duty3)
-        self.right_lower_wheel(duty4)
+        left_u, left_l, right_u, right_l = self.duty_range(left_upper_duty, left_lower_duty, right_upper_duty, right_lower_duty)
+        self.left_upper_wheel(left_u)
+        self.left_lower_wheel(left_l)
+        self.right_upper_wheel(right_u)
+        self.right_lower_wheel(right_l)
 
 
     # def __rotate(self, n):
@@ -224,7 +306,7 @@ if __name__ == '__main__':
         motor.set_motor_model(-2000, -2000, -2000, -2000)  # Back
         time.sleep(1)
         motor.set_motor_model(4000, 4000, 50, 50)  # Right
-        time.sleep(1)
+        time.sleep(2)
         motor.set_motor_model(50, 50, 4000, 4000)  # Left
         time.sleep(2)
         motor.stop()    # Stop
