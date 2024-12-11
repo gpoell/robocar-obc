@@ -107,10 +107,10 @@ class MotorPublishers(Publishers):
     - threads:  publishes the current thread count
     """
 
-    luPWM: Topic = Topic(topic="device/motor/pwm/left/upper", qos=0)
-    llPWM: Topic = Topic(topic="device/motor/pwm/left/lower", qos=0)
-    ruPWM: Topic = Topic(topic="device/motor/pwm/right/upper", qos=0)
-    rlPWM: Topic = Topic(topic="device/motor/pwm/right/lower", qos=0)
+    luPWM: Topic = Topic(topic="device/motor/wheel/left/upper/pwm", qos=0)
+    llPWM: Topic = Topic(topic="device/motor/wheel/left/lower/pwm", qos=0)
+    ruPWM: Topic = Topic(topic="device/motor/wheel/right/upper/pwm", qos=0)
+    rlPWM: Topic = Topic(topic="device/motor/wheel/right/lower/pwm", qos=0)
     status: Topic = Topic(topic="device/motor/status", qos=0)
     threads: Topic = Topic(topic="device/motor/threads", qos=0)
 
