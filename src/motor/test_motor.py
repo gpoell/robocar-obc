@@ -18,9 +18,9 @@ class TestMotor(unittest.TestCase):
         """Test to ensure Motor class contains the properties: rotation_delay, pwm, adc"""
 
         self.assertTrue(hasattr(self.motor, 'rotation_delay'), "Motor class should have a 'rotation_delay' property")
-        self.assertTrue(hasattr(self.motor, 'pwm_address'), "Motor class should have a 'pwm_address' property")
-        self.assertTrue(hasattr(self.motor, 'pwm_frequency'), "Motor class should have a 'pwm_frequency' property")
-        self.assertTrue(hasattr(self.motor, 'resolution'), "Motor class should have a 'resolution' property")
+        self.assertTrue(hasattr(self.motor, 'pwm'), "Motor class should have a 'pwm' property")
+        self.assertTrue(hasattr(self.motor, 'adc'), "Motor class should have a 'adc' property")
+        self.assertTrue(hasattr(self.motor, 'target_distance'), "Motor class should have a 'target_distance' property")
 
     def test_motor_property_values(self):
         """Test to ensure Motor class is instantiated with correct property types and values."""

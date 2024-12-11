@@ -73,7 +73,7 @@ class Motor(MqttDevice):
         self.rotation_delay = rotation_delay
         self.pwm = PCA9685(pwm_address, pwm_frequency)
         self.adc = Adc()
-        self.distance = 0      # Temporarily track distances from ultrasonic sensor
+        self.target_distance = 0      # Temporarily track distances from ultrasonic sensor
 
 
     def client_on_connect(self, client, userdata, flags, return_code) -> None:
@@ -103,7 +103,7 @@ class Motor(MqttDevice):
         # Temporarily capture distance from Ultrasonic Sensor
         # I think future state should let the State Machine interpret distances and drive behavior
         if topic == self.subscribers.ultrasonicDistance:
-            self.distance = float(message)
+            self.target_distance = float(message)
 
 
 
