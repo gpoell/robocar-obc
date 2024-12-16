@@ -32,3 +32,11 @@ class TestMotor(unittest.TestCase):
         self.assertRaises(TypeError, Motor, wrong_rotation_delay)
         self.assertRaises(TypeError, Motor, wrong_pwm_address)
         self.assertRaises(TypeError, Motor, wrong_pwm_freq)
+
+    def test_duty_range(self):
+        """Test the duty range method to ensure it returns tuple values within 12-bit (4905) resolution"""
+
+        test = self.motor.duty_range(5000, 40, -595, -5000)
+        expected = (4095, 40, -595, -4095)
+
+        self.assertIs(test, expected, "The duty range test values are not (4095, 40, -595, -4095)")
