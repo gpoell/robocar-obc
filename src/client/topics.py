@@ -69,7 +69,7 @@ class Topics:
 class UltrasonicPublishers(Publishers):
     """
     Ultrasonic topics for publishing data. Use this data type for
-    creating the Topics object required by the Ultrasonic class.
+    creating the Topics object required by the MqttDevice class.
 
     - distance: publishes ultrasonic distance
     - status:   publishes the status of the ultrasonic sensor
@@ -84,13 +84,48 @@ class UltrasonicPublishers(Publishers):
 @dataclass(frozen=True)
 class UltrasonicSubscribers(Subscribers):
     """
-    Ultrasonic topics for publishing data. Use this data type for
-    creating the Topics object required by the Ultrasonic class.
+    Ultrasonic topics for subscribing to data. Use this data type for
+    creating the Topics object required by the MqttDevice class.
 
     - appStatus: subscribes to the overall app status
     """
 
     appStatus: Topic = Topic(topic="app/status", qos=1)
+
+
+@dataclass(frozen=True)
+class MotorPublishers(Publishers):
+    """
+    Motor topics for publishing data. Use this data type for
+    creating the Topics object required by the MqttDevice class.
+
+    - luPWM:    publishes the PWM duty cycle for the Left Upper Wheel
+    - llPWM:    publishes the PWM duty cycle for the Left Lower Wheel
+    - ruPWM:    publishes the PWM duty cycle for the Right Upper Wheel
+    - rlPWM:    publishes the PWM duty cycle for the Right Lower Wheel
+    - status:   publishes the status of the ultrasonic sensor
+    - threads:  publishes the current thread count
+    """
+
+    luPWM: Topic = Topic(topic="device/motor/wheel/left/upper/pwm", qos=0)
+    llPWM: Topic = Topic(topic="device/motor/wheel/left/lower/pwm", qos=0)
+    ruPWM: Topic = Topic(topic="device/motor/wheel/right/upper/pwm", qos=0)
+    rlPWM: Topic = Topic(topic="device/motor/wheel/right/lower/pwm", qos=0)
+    status: Topic = Topic(topic="device/motor/status", qos=0)
+    threads: Topic = Topic(topic="device/motor/threads", qos=0)
+
+
+@dataclass(frozen=True)
+class MotorSubscribers(Subscribers):
+    """
+    Motor topics for subscribing to data. Use this data type for
+    creating the Topics object required by the MqttDevice class.
+
+    - appStatus: subscribes to the overall app status
+    """
+
+    appStatus: Topic = Topic(topic="app/status", qos=1)
+    ultrasonicDistance: Topic = Topic(topic=UltrasonicPublishers.distance, qos=1)
 
 
 def get_topics(topics: Union[Publishers, Subscribers]) -> list[tuple]:

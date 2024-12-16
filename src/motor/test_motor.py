@@ -18,9 +18,9 @@ class TestMotor(unittest.TestCase):
         """Test to ensure Motor class contains the properties: rotation_delay, pwm, adc"""
 
         self.assertTrue(hasattr(self.motor, 'rotation_delay'), "Motor class should have a 'rotation_delay' property")
-        self.assertTrue(hasattr(self.motor, 'pwm_address'), "Motor class should have a 'pwm_address' property")
-        self.assertTrue(hasattr(self.motor, 'pwm_frequency'), "Motor class should have a 'pwm_frequency' property")
-        self.assertTrue(hasattr(self.motor, 'resolution'), "Motor class should have a 'resolution' property")
+        self.assertTrue(hasattr(self.motor, 'pwm'), "Motor class should have a 'pwm' property")
+        self.assertTrue(hasattr(self.motor, 'adc'), "Motor class should have a 'adc' property")
+        self.assertTrue(hasattr(self.motor, 'target_distance'), "Motor class should have a 'target_distance' property")
 
     def test_motor_property_values(self):
         """Test to ensure Motor class is instantiated with correct property types and values."""
@@ -32,3 +32,11 @@ class TestMotor(unittest.TestCase):
         self.assertRaises(TypeError, Motor, wrong_rotation_delay)
         self.assertRaises(TypeError, Motor, wrong_pwm_address)
         self.assertRaises(TypeError, Motor, wrong_pwm_freq)
+
+    def test_duty_range(self):
+        """Test the duty range method to ensure it returns tuple values within 12-bit (4905) resolution"""
+
+        test = self.motor.duty_range(5000, 40, -595, -5000)
+        expected = (4095, 40, -595, -4095)
+
+        self.assertIs(test, expected, "The duty range test values are not (4095, 40, -595, -4095)")
