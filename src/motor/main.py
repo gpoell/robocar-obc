@@ -1,5 +1,5 @@
 import time
-from motor.motor import Motor
+from motor import Motor
 from client.topics import MotorPublishers, MotorSubscribers, Topics
 from client.mqtt_client import ClientConfig
 
@@ -7,8 +7,8 @@ def trajectory_planning(distance: int) -> int:
 
     if distance > 300: return 2000
     elif 200 < distance <= 300: return 1500
-    elif 100 < distance <= 200: return 1000
-    elif 30 < distance <= 100: return 600
+    elif 60 < distance <= 200: return 1000
+    elif 20 < distance <= 60: return 600
     else: return 0
 
 
@@ -47,12 +47,13 @@ def main():
 
             # Step 3: Stop the vehicle if it reaches an obstacle
             if wheels_power == 0:
-                motor.stop()
-                time.sleep(3)
+                # motor.stop()
+                motor.drive(0)
+                time.sleep(2)
 
                 # Step 4: Turn the vehicle 180 degrees
-                motor.turn_around(turn_cycles=8)
-                time.sleep(2)
+                motor.turn_around(turn_cycles=3)
+                time.sleep(1)
 
     except KeyboardInterrupt:
         print("Disconnecting motor...")

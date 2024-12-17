@@ -99,7 +99,7 @@ class PCA9685:
 
     def set_motor_pwm(self, channel: int, duty: int) -> None:
         """Wrapper function for setting the motor PWM."""
-        self.set_pwm(channel , 0, duty)
+        self.set_pwm(channel, 0, duty)
 
 
     def set_servo_pulse(self, channel: int, pulse: int) -> None:

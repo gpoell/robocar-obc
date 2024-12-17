@@ -16,6 +16,7 @@ services:
     container_name: motor
     volumes:
       - ./src/motor:/app
+      - ./src/client:/app/client
     privileged: true
     environment:
       - ENVIRON=${ENVIRON}

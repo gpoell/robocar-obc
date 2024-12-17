@@ -47,6 +47,16 @@ class Motor(MqttDevice):
 
     """
 
+    __LEFT_UPPER_FORWARD = 0
+    __LEFT_UPPER_REVERSE = 1
+    __LEFT_LOWER_REVERSE = 2
+    __LEFT_LOWER_FORWARD = 3
+    __RIGHT_LOWER_FORWARD = 4
+    __RIGHT_LOWER_REVERSE = 5
+    __RIGHT_UPPER_FORWARD = 6
+    __RIGHT_UPPER_REVERSE = 7
+
+
     def __init__(
         self,
         client_config: ClientConfig,
@@ -75,6 +85,11 @@ class Motor(MqttDevice):
         self.adc = Adc()
         self.target_distance = 0      # Temporarily track distances from ultrasonic sensor
 
+        # Attach MQTT Event-Based Callbacks to Client
+        self.client.on_connect = self.client_on_connect
+        self.client.on_message = self.client_on_message
+        self._connect_to_broker()
+
 
     def client_on_connect(self, client, userdata, flags, return_code) -> None:
         """Client callback when ultrasonic sensor connects to MQTT broker. Temporary placehoder"""
@@ -102,7 +117,7 @@ class Motor(MqttDevice):
 
         # Temporarily capture distance from Ultrasonic Sensor
         # I think future state should let the State Machine interpret distances and drive behavior
-        if topic == self.subscribers.ultrasonicDistance:
+        if topic == self.subscribers.ultrasonicDistance.topic:
             self.target_distance = float(message)
 
 
@@ -232,16 +247,16 @@ class Motor(MqttDevice):
         """
 
         if duty > 0:
-            self.pwm.set_motor_pwm(MotorChannels.LEFT_UPPER_REVERSE, 0)
-            self.pwm.set_motor_pwm(MotorChannels.LEFT_UPPER_FORWARD, duty)
+            self.pwm.set_motor_pwm(self.__LEFT_UPPER_REVERSE, 0)
+            self.pwm.set_motor_pwm(self.__LEFT_UPPER_FORWARD, duty)
 
         elif duty < 0:
-            self.pwm.set_motor_pwm(MotorChannels.LEFT_UPPER_FORWARD, 0)
-            self.pwm.set_motor_pwm(MotorChannels.LEFT_UPPER_REVERSE, abs(duty))
+            self.pwm.set_motor_pwm(self.__LEFT_UPPER_FORWARD, 0)
+            self.pwm.set_motor_pwm(self.__LEFT_UPPER_REVERSE, abs(duty))
 
         else:
-            self.pwm.set_motor_pwm(MotorChannels.LEFT_UPPER_FORWARD, 0)
-            self.pwm.set_motor_pwm(MotorChannels.LEFT_UPPER_REVERSE, 0)
+            self.pwm.set_motor_pwm(self.__LEFT_UPPER_FORWARD, 0)
+            self.pwm.set_motor_pwm(self.__LEFT_UPPER_REVERSE, 0)
 
 
     def left_lower_wheel(self, duty: int) -> None:
@@ -250,16 +265,16 @@ class Motor(MqttDevice):
         """
 
         if duty > 0:
-            self.pwm.set_motor_pwm(MotorChannels.LEFT_LOWER_REVERSE, 0)
-            self.pwm.set_motor_pwm(MotorChannels.LEFT_LOWER_FORWARD, duty)
+            self.pwm.set_motor_pwm(self.__LEFT_LOWER_REVERSE, 0)
+            self.pwm.set_motor_pwm(self.__LEFT_LOWER_FORWARD, duty)
 
         elif duty < 0:
-            self.pwm.set_motor_pwm(MotorChannels.LEFT_LOWER_FORWARD, 0)
-            self.pwm.set_motor_pwm(MotorChannels.LEFT_LOWER_REVERSE, abs(duty))
+            self.pwm.set_motor_pwm(self.__LEFT_LOWER_FORWARD, 0)
+            self.pwm.set_motor_pwm(self.__LEFT_LOWER_REVERSE, abs(duty))
 
         else:
-            self.pwm.set_motor_pwm(MotorChannels.LEFT_LOWER_FORWARD, 0)
-            self.pwm.set_motor_pwm(MotorChannels.LEFT_LOWER_REVERSE, 0)
+            self.pwm.set_motor_pwm(self.__LEFT_LOWER_FORWARD, 0)
+            self.pwm.set_motor_pwm(self.__LEFT_LOWER_REVERSE, 0)
 
 
     def right_lower_wheel(self, duty: int) -> None:
@@ -268,16 +283,16 @@ class Motor(MqttDevice):
         """
 
         if duty > 0:
-            self.pwm.set_motor_pwm(MotorChannels.RIGHT_LOWER_REVERSE, 0)
-            self.pwm.set_motor_pwm(MotorChannels.RIGHT_LOWER_FORWARD, duty)
+            self.pwm.set_motor_pwm(self.__RIGHT_LOWER_REVERSE, 0)
+            self.pwm.set_motor_pwm(self.__RIGHT_LOWER_FORWARD, duty)
 
         elif duty < 0:
-            self.pwm.set_motor_pwm(MotorChannels.RIGHT_LOWER_FORWARD, 0)
-            self.pwm.set_motor_pwm(MotorChannels.RIGHT_LOWER_REVERSE, abs(duty))
+            self.pwm.set_motor_pwm(self.__RIGHT_LOWER_FORWARD, 0)
+            self.pwm.set_motor_pwm(self.__RIGHT_LOWER_REVERSE, abs(duty))
 
         else:
-            self.pwm.set_motor_pwm(MotorChannels.RIGHT_LOWER_REVERSE, 0)
-            self.pwm.set_motor_pwm(MotorChannels.RIGHT_LOWER_FORWARD, 0)
+            self.pwm.set_motor_pwm(self.__RIGHT_LOWER_REVERSE, 0)
+            self.pwm.set_motor_pwm(self.__RIGHT_LOWER_FORWARD, 0)
 
 
     def right_upper_wheel(self, duty: int) -> None:
@@ -286,16 +301,16 @@ class Motor(MqttDevice):
         """
 
         if duty > 0:
-            self.pwm.set_motor_pwm(MotorChannels.RIGHT_UPPER_REVERSE, 0)
-            self.pwm.set_motor_pwm(MotorChannels.RIGHT_UPPER_FORWARD, duty)
+            self.pwm.set_motor_pwm(self.__RIGHT_UPPER_REVERSE, 0)
+            self.pwm.set_motor_pwm(self.__RIGHT_UPPER_FORWARD, duty)
 
         elif duty < 0:
-            self.pwm.set_motor_pwm(MotorChannels.RIGHT_UPPER_FORWARD, 0)
-            self.pwm.set_motor_pwm(MotorChannels.RIGHT_UPPER_REVERSE, abs(duty))
+            self.pwm.set_motor_pwm(self.__RIGHT_UPPER_FORWARD, 0)
+            self.pwm.set_motor_pwm(self.__RIGHT_UPPER_REVERSE, abs(duty))
 
         else:
-            self.pwm.set_motor_pwm(MotorChannels.RIGHT_UPPER_REVERSE, 0)
-            self.pwm.set_motor_pwm(MotorChannels.RIGHT_UPPER_FORWARD, 0)
+            self.pwm.set_motor_pwm(self.__RIGHT_UPPER_REVERSE, 0)
+            self.pwm.set_motor_pwm(self.__RIGHT_UPPER_FORWARD, 0)
 
 
     def set_motor_model(
@@ -349,7 +364,7 @@ class Motor(MqttDevice):
         self.pwm.close()
 
 
-    def turn_around(self, turn_cycles: int=8) -> None:
+    def turn_around(self, turn_cycles: int=3) -> None:
         """
         (Testing) Turns the vehicle approximately 180 degrees.
         Multiple variables such as floor friction and differential speed ratios
@@ -359,28 +374,46 @@ class Motor(MqttDevice):
         degree turn, so 8 cycles is 180 degrees.
         """
 
-        for _ in turn_cycles:
-            self.drive_left(50, 4095)
+        for _ in range(turn_cycles):
+            self.drive_left(300, 3200)
             time.sleep(0.5)
-            self.reverse_right(4095, 50)
+
+            # Pause
+            self.set_motor_model(0, 0, 0, 0)
             time.sleep(0.5)
+
+            self.reverse_right(3200, 300)
+            time.sleep(0.5)
+
+            # Pause
+            self.set_motor_model(0, 0, 0, 0)
+            time.sleep(0.5)
+
 
         self.set_motor_model(0, 0, 0, 0)
 
 
 
 if __name__ == '__main__':
-    motor = Motor()
+    from client.topics import MotorPublishers, MotorSubscribers, Topics
+
+    # Create Motor with topics and MQTT connection details
+    publishers = MotorPublishers()
+    subscribers = MotorSubscribers()
+    topics = Topics(publishers, subscribers)
+    clientConfig = ClientConfig(topics, host="mqtt-broker", port=1883)
+    motor = Motor(clientConfig)
+
     try:
         motor.set_motor_model(2000, 2000, 2000, 2000)  # Forward
         time.sleep(1)
         motor.set_motor_model(-2000, -2000, -2000, -2000)  # Back
         time.sleep(1)
         motor.set_motor_model(4000, 4000, 50, 50)  # Right
-        time.sleep(2)
+        time.sleep(0.5)
         motor.set_motor_model(50, 50, 4000, 4000)  # Left
-        time.sleep(2)
-        motor.turn_around(turn_cycles=8)    # Spin 180 degrees
+        time.sleep(0.5)
+        motor.turn_around(turn_cycles=3)    # Spin 180 degrees
         motor.stop()    # Stop
 
     except KeyboardInterrupt:
