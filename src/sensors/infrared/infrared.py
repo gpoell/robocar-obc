@@ -1,5 +1,7 @@
 import importlib
+import threading
 from client.mqtt_client import MqttDevice, ClientConfig, Environment, State
+from client.topics import Topics, InfraredPublishers, InfraredSubscribers
 from enum import IntEnum
 from time import sleep
 
@@ -41,7 +43,6 @@ class IRLaneDetector(MqttDevice):
         samples: int = 5,
         sample_rate: int = 100,
         threshold: float = 0.5,
-        frequency: float = 0.05
     ) -> None:
 
         # Brief Type and Value Checks for major issues
@@ -53,19 +54,14 @@ class IRLaneDetector(MqttDevice):
             raise TypeError("Supported types for threshold are: <float>")
         if not isinstance(client_config, ClientConfig):
             raise TypeError("Supported types for client_config are: <ClientConfig>")
-        if not isinstance(frequency, float):
-            raise TypeError("Supported types for frequency are: <float>")
         if samples < 1 or sample_rate < 1:
             raise ValueError("Samples and sample rates must be positive values.")
         if 1 < threshold < 0:
             raise ValueError("Thresholds to determine active states must be between 0 and 1.")
-        if frequency < 0:
-            raise ValueError("Frequency values must be positive.")
 
-        # Initialize MqttDevice
+        # Initialize MqttDevice and connect to broker
         super().__init__(client_config)
-
-        self.frequency = frequency
+        self._connect_to_broker()
 
         # Import gpiozero if running on Raspberry Pi and set sensors
         gpiozero = self.__import_gpiozero()
@@ -91,18 +87,52 @@ class IRLaneDetector(MqttDevice):
             raise e
 
 
-    def run(self) -> None:
-        while True: # Change to sensor state
-            sleep(self.frequency)
+    def run(self, freq: float=0.05) -> None:
+        """
+        Program logic for running the IRLaneDetector. The IR sensors actively report
+        whether they have detected a dark (black) line and publish to the MQTT broker.
+
+        :param freq: frequency for reading and publishing data.
+        """
+
+        while self.state == State.ON:
+            sleep(freq)
             print(self.IR01.value, self.IR02.value, self.IR03.value, sep='|')
+            thread_count = threading.active_count()
+
+            responses = [
+                self.publish_data(self.publishers.irleft, self.IR01.value, timeout=1.0),
+                self.publish_data(self.publishers.irmiddle, self.IR02.value, timeout=1.0),
+                self.publish_data(self.publishers.irright, self.IR03.value, timeout=1.0),
+                self.publish_data(self.publishers.threads, thread_count, timeout=1.0),
+                self.publish_data(self.publishers.status, self.state, timeout=1.0),
+            ]
+
+            if False in responses:
+                self.stop()
+
+    def stop(self) -> None:
+        """
+        Set the state to OFF and publish the status.
+        """
+        self.state = State.OFF
+        self.publish_data(self.publishers.status, self.state, timeout=1.0)
+
+
 
 if __name__ == '__main__':
 
-    sensor = IRLaneDetector()
+    # Set the topics for MQTT
+    publishers = InfraredPublishers()
+    subscribers = InfraredSubscribers()
+    topics = Topics(publishers, subscribers)
+    clientConfig = ClientConfig(topics, host="mqtt-broker", port=1883)
+
+    sensor = IRLaneDetector(client_config=clientConfig)
 
     try:
-        print("Sensor is running...")
         sensor.run()
     except KeyboardInterrupt:
-        print("Sensor is stopping...")
+        print("LaneDetector stopped...")
+        sensor.stop()
 
