@@ -1,7 +1,6 @@
 import importlib
 import threading
 from client.mqtt_client import MqttDevice, ClientConfig, Environment, State
-from client.topics import Topics, InfraredPublishers, InfraredSubscribers
 from enum import IntEnum
 from time import sleep
 
@@ -121,6 +120,7 @@ class IRLaneDetector(MqttDevice):
 
 
 if __name__ == '__main__':
+    from client.topics import Topics, InfraredPublishers, InfraredSubscribers
 
     # Set the topics for MQTT
     publishers = InfraredPublishers()
