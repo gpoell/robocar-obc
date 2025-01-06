@@ -128,6 +128,39 @@ class MotorSubscribers(Subscribers):
     ultrasonicDistance: Topic = Topic(topic=UltrasonicPublishers.distance.topic, qos=1)
 
 
+@dataclass(frozen=True)
+class InfraredPublishers(Publishers):
+    """
+    Topics for publishing lane detection status of each
+    infrared sensor. This data type is required for creating the Topics
+    required by the MqttDevice class inherited by the Infrared class.
+
+    - irleft:   publishes the lane detection status of the left IR sensor
+    - irmiddle: publishes the lane detection status of the middle IR sensor
+    - irright:  publishes the lane detection status of the right IR sensor
+    - status:   publishes the status of the infrared sensor
+    - threads:  publishes the current thread count
+    """
+
+    irleft: Topic = Topic(topic="device/infrared/left", qos=0)
+    irmiddle: Topic = Topic(topic="device/infrared/middle", qos=0)
+    irright: Topic = Topic(topic="device/infrared/right", qos=0)
+    status: Topic = Topic(topic="device/infrared/status", qos=0)
+    threads: Topic = Topic(topic="device/infrared/threads", qos=0)
+
+
+@dataclass(frozen=True)
+class InfraredSubscribers(Subscribers):
+    """
+    Infrared Sensor subscription topics. Use this data type for
+    creating the Topics object required by the MqttDevice class.
+
+    - appStatus: subscribes to the overall app status
+    """
+
+    appStatus: Topic = Topic(topic="app/status", qos=1)
+
+
 def get_topics(topics: Union[Publishers, Subscribers]) -> list[tuple]:
     """
     Returns a list of topic values for Publishers or Subscribers.

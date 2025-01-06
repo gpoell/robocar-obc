@@ -1,7 +1,9 @@
 import unittest
 from topics import Topics, Topic, Publishers, Subscribers, \
     UltrasonicPublishers, UltrasonicSubscribers, \
-    MotorPublishers, MotorSubscribers,  get_topics
+    MotorPublishers, MotorSubscribers,  \
+    InfraredPublishers, InfraredSubscribers, \
+    get_topics
 
 
 class TestTopics(unittest.TestCase):
@@ -153,6 +155,37 @@ class TestTopics(unittest.TestCase):
         motor_sub = MotorSubscribers()
 
         self.assertIsInstance(motor_sub.appStatus, Topic)
+
+
+    def test_infrared_publishers_properties_exist(self):
+        """
+        Test to ensure InfraredPublishers instances contain properties:
+        - irleft
+        - irmiddle
+        - irright
+        - threads
+        - status
+        """
+
+        publishers = InfraredPublishers()
+
+        self.assertTrue(hasattr(publishers, 'irleft'), "InfraredPublishers should have a 'irleft' property")
+        self.assertTrue(hasattr(publishers, 'irright'), "InfraredPublishers should have a 'irright' property")
+        self.assertTrue(hasattr(publishers, 'irmiddle'), "InfraredPublishers should have a 'ruPWM' property")
+        self.assertTrue(hasattr(publishers, 'threads'), "InfraredPublishers should have a 'threads' property")
+        self.assertTrue(hasattr(publishers, 'status'), "InfraredPublishers should have a 'status' property")
+
+
+    def test_infrared_publishers_property_types(self):
+        """Test to ensure InfraredPublisher instances contain Topic values."""
+
+        publishers = InfraredPublishers()
+
+        self.assertIsInstance(publishers.irleft, Topic)
+        self.assertIsInstance(publishers.irmiddle, Topic)
+        self.assertIsInstance(publishers.irright, Topic)
+        self.assertIsInstance(publishers.threads, Topic)
+        self.assertIsInstance(publishers.status, Topic)
 
 
     def test_get_topics(self):

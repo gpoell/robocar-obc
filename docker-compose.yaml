@@ -36,6 +36,21 @@ services:
       - ENVIRON=${ENVIRON}
 
 
+  infrared:
+    build: ./src/sensors/infrared
+    tty: true
+    container_name: infrared
+    volumes:
+      - ./src/sensors/infrared:/app
+      - ./src/client:/app/client
+
+    working_dir: /app
+    privileged: true
+    environment:
+      - ENVIRON=${ENVIRON}
+
+
+
 
   mqtt-broker:
     image: eclipse-mosquitto:latest
