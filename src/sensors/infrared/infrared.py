@@ -96,7 +96,6 @@ class IRLaneDetector(MqttDevice):
 
         while self.state == State.ON:
             sleep(freq)
-            print(self.IR01.value, self.IR02.value, self.IR03.value, sep='|')
             thread_count = threading.active_count()
 
             responses = [
