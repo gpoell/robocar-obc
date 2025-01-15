@@ -66,69 +66,6 @@ class Topics:
 
 
 @dataclass(frozen=True)
-class UltrasonicPublishers(Publishers):
-    """
-    Ultrasonic topics for publishing data. Use this data type for
-    creating the Topics object required by the MqttDevice class.
-
-    - distance: publishes ultrasonic distance
-    - status:   publishes the status of the ultrasonic sensor
-    - threads:  publishes the current thread count
-    """
-
-    distance: Topic = Topic(topic="device/ultrasonic/distance", qos=0)
-    status: Topic = Topic(topic="device/ultrasonic/status", qos=0)
-    threads: Topic = Topic(topic="device/ultrasonic/threads", qos=0)
-
-
-@dataclass(frozen=True)
-class UltrasonicSubscribers(Subscribers):
-    """
-    Ultrasonic topics for subscribing to data. Use this data type for
-    creating the Topics object required by the MqttDevice class.
-
-    - appStatus: subscribes to the overall app status
-    """
-
-    appStatus: Topic = Topic(topic="app/status", qos=1)
-
-
-@dataclass(frozen=True)
-class MotorPublishers(Publishers):
-    """
-    Motor topics for publishing data. Use this data type for
-    creating the Topics object required by the MqttDevice class.
-
-    - luPWM:    publishes the PWM duty cycle for the Left Upper Wheel
-    - llPWM:    publishes the PWM duty cycle for the Left Lower Wheel
-    - ruPWM:    publishes the PWM duty cycle for the Right Upper Wheel
-    - rlPWM:    publishes the PWM duty cycle for the Right Lower Wheel
-    - status:   publishes the status of the ultrasonic sensor
-    - threads:  publishes the current thread count
-    """
-
-    luPWM: Topic = Topic(topic="device/motor/wheel/left/upper/pwm", qos=0)
-    llPWM: Topic = Topic(topic="device/motor/wheel/left/lower/pwm", qos=0)
-    ruPWM: Topic = Topic(topic="device/motor/wheel/right/upper/pwm", qos=0)
-    rlPWM: Topic = Topic(topic="device/motor/wheel/right/lower/pwm", qos=0)
-    status: Topic = Topic(topic="device/motor/status", qos=0)
-    threads: Topic = Topic(topic="device/motor/threads", qos=0)
-
-
-@dataclass(frozen=True)
-class MotorSubscribers(Subscribers):
-    """
-    Motor topics for subscribing to data. Use this data type for
-    creating the Topics object required by the MqttDevice class.
-
-    - appStatus: subscribes to the overall app status
-    """
-
-    appStatus: Topic = Topic(topic="app/status", qos=1)
-    ultrasonicDistance: Topic = Topic(topic=UltrasonicPublishers.distance.topic, qos=1)
-
-
-@dataclass(frozen=True)
 class InfraredPublishers(Publishers):
     """
     Topics for publishing lane detection status of each
@@ -159,6 +96,73 @@ class InfraredSubscribers(Subscribers):
     """
 
     appStatus: Topic = Topic(topic="app/status", qos=1)
+
+
+@dataclass(frozen=True)
+class UltrasonicPublishers(Publishers):
+    """
+    Ultrasonic topics for publishing data. Use this data type for
+    creating the Topics object required by the MqttDevice class.
+
+    - distance: publishes ultrasonic distance
+    - status:   publishes the status of the ultrasonic sensor
+    - threads:  publishes the current thread count
+    """
+
+    distance: Topic = Topic(topic="device/ultrasonic/distance", qos=0)
+    status: Topic = Topic(topic="device/ultrasonic/status", qos=0)
+    threads: Topic = Topic(topic="device/ultrasonic/threads", qos=0)
+
+
+@dataclass(frozen=True)
+class UltrasonicSubscribers(Subscribers):
+    """
+    Ultrasonic topics for subscribing to data. Use this data type for
+    creating the Topics object required by the MqttDevice class.
+
+    - appStatus: subscribes to the overall app status
+    """
+
+    appStatus: Topic = Topic(topic="app/status", qos=1)
+
+
+@dataclass(frozen=True)
+class VehiclePublishers(Publishers):
+    """
+    Vehicle topics for publishing data. Use this data type for
+    creating the Topics object required by the MqttDevice class.
+
+    - luPWM:    publishes the PWM duty cycle for the Left Upper Wheel
+    - llPWM:    publishes the PWM duty cycle for the Left Lower Wheel
+    - ruPWM:    publishes the PWM duty cycle for the Right Upper Wheel
+    - rlPWM:    publishes the PWM duty cycle for the Right Lower Wheel
+    - status:   publishes the status of the ultrasonic sensor
+    - threads:  publishes the current thread count
+    """
+
+    luPWM: Topic = Topic(topic="device/vehicle/wheel/left/upper/pwm", qos=0)
+    llPWM: Topic = Topic(topic="device/vehicle/wheel/left/lower/pwm", qos=0)
+    ruPWM: Topic = Topic(topic="device/vehicle/wheel/right/upper/pwm", qos=0)
+    rlPWM: Topic = Topic(topic="device/vehicle/wheel/right/lower/pwm", qos=0)
+    status: Topic = Topic(topic="device/vehicle/status", qos=0)
+    threads: Topic = Topic(topic="device/vehicle/threads", qos=0)
+
+
+@dataclass(frozen=True)
+class VehicleSubscribers(Subscribers):
+    """
+    Vehicle topics for subscribing to data. Use this data type for
+    creating the Topics object required by the MqttDevice class.
+
+    - appStatus: subscribes to the overall app status
+    """
+
+    appStatus: Topic = Topic(topic="app/status", qos=1)
+    ultrasonicDistance: Topic = Topic(topic=UltrasonicPublishers.distance.topic, qos=1)
+    irleft: Topic = Topic(topic=InfraredPublishers.irleft, qos=1)
+    irmiddle: Topic = Topic(topic=InfraredPublishers.irmiddle, qos=1)
+    irright: Topic = Topic(topic=InfraredPublishers.irright, qos=1)
+
 
 
 def get_topics(topics: Union[Publishers, Subscribers]) -> list[tuple]:
