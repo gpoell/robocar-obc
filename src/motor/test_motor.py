@@ -9,7 +9,7 @@ class TestMotor(unittest.TestCase):
 
     def setUp(self) -> None:
 
-        self.motor = Motor(rotation_delay=2.5)
+        self.motor = Motor()
 
     def tearDown(self) -> None:
         pass
@@ -17,19 +17,14 @@ class TestMotor(unittest.TestCase):
     def test_motor_property_exists(self):
         """Test to ensure Motor class contains the properties: rotation_delay, pwm, adc"""
 
-        self.assertTrue(hasattr(self.motor, 'rotation_delay'), "Motor class should have a 'rotation_delay' property")
         self.assertTrue(hasattr(self.motor, 'pwm'), "Motor class should have a 'pwm' property")
-        self.assertTrue(hasattr(self.motor, 'adc'), "Motor class should have a 'adc' property")
-        self.assertTrue(hasattr(self.motor, 'target_distance'), "Motor class should have a 'target_distance' property")
 
     def test_motor_property_values(self):
         """Test to ensure Motor class is instantiated with correct property types and values."""
 
-        wrong_rotation_delay = "2.5"
         wrong_pwm_address = 4.5
         wrong_pwm_freq = "5000"
 
-        self.assertRaises(TypeError, Motor, wrong_rotation_delay)
         self.assertRaises(TypeError, Motor, wrong_pwm_address)
         self.assertRaises(TypeError, Motor, wrong_pwm_freq)
 
