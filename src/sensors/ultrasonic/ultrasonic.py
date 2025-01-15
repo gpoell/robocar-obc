@@ -29,8 +29,6 @@ class Ultrasonic(MqttDevice):
 
     """
 
-
-
     def __init__(
         self,
         client_config: ClientConfig,
@@ -59,10 +57,6 @@ class Ultrasonic(MqttDevice):
         # GPIO Settings
         if self.env == Environment.PROD:
             self._set_GPIO()
-
-        # Attach MQTT Event-Based Callbacks to Client
-        self.client.on_connect = self.client_on_connect
-        self.client.on_message = self.client_on_message
 
 
     def _set_GPIO(self) -> None:
@@ -128,33 +122,6 @@ class Ultrasonic(MqttDevice):
         return median(distance_samples)
 
 
-    def client_on_connect(self, client, userdata, flags, return_code) -> bool:
-        """Client callback when ultrasonic sensor connects to MQTT broker. Temporary placehoder"""
-        if return_code != 0:
-            print("could not connect, return code:", return_code)
-            return False
-
-        print("Ultrasonic sensor is connected.....")
-        return True
-
-
-    def client_on_message(self, client, userdata, msg) -> None:
-        """
-        Event based callback when the ultrasonic sensor receives a message from MQTT broker.
-        The types of messages received by the broker should reflect what is declared in the
-        Subscribers datatype,
-
-        :param client: reference to client instance connected to MQTT broker.
-        :param userdata: <TBD>
-        :param msg: incoming message from MQTT Broker.
-        """
-        message = msg.payload.decode()
-        topic = msg.topic
-
-        if topic == self.subscribers.appStatus and message != "active":
-            self.state = State.OFF
-
-
     def run(self, freq: float=0.05):
         """
         Program logic for running the ultrasonic sensor. The sensor continuously publishes distances,
@@ -180,6 +147,7 @@ class Ultrasonic(MqttDevice):
 
             if False in responses:
                 self.state = State.OFF
+
 
     def stop(self):
         """

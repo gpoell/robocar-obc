@@ -60,7 +60,6 @@ class IRLaneDetector(MqttDevice):
 
         # Initialize MqttDevice and connect to broker
         super().__init__(client_config)
-        self._connect_to_broker()
 
         # Import gpiozero if running on Raspberry Pi and set sensors
         gpiozero = self.__import_gpiozero()

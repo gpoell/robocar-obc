@@ -89,9 +89,9 @@ def main():
             vehicle.drive(motor_model[0], motor_model[1], motor_model[2], motor_model[3])
             print(f"Obstacle Distance: {vehicle.target_distance} | Lane Model: {lane_model} | PWM: {motor_model}")
 
-            # Stop Motor if there is an obstacle or if it falls off track
-            if sum(motor_model) == 0:
-                break
+            # # Stop Motor if there is an obstacle or if it falls off track
+            # if sum(motor_model) == 0:
+            #     break
 
     except KeyboardInterrupt:
         print("Vehicle was manually stopped..")

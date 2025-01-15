@@ -28,17 +28,7 @@ class Vehicle(MqttDevice):
         self.lane_model = [0, 0, 0]   # Track status of IR lane detectors
 
         # Attach MQTT Event-Based Callbacks to Client
-        self.client.on_connect = self.client_on_connect
         self.client.on_message = self.client_on_message
-        self._connect_to_broker()
-
-
-    def client_on_connect(self, client, userdata, flags, return_code) -> None:
-        """Callback when the device connects to the MQTT Broker."""
-        if return_code != 0:
-            raise ValueError("Could not connect to MQTT Broker, return code:", return_code)
-
-        print("Vehicle is connected to the MQTT Broker...")
 
 
     def client_on_message(self, client, userdata, msg) -> None:

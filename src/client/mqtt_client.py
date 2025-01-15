@@ -2,7 +2,7 @@ import paho.mqtt.client as mqtt
 import os
 from enum import Enum, IntEnum
 from client.topics import Topics, Topic, get_topics
-# from topics import Topics, Topic, get_topics      # Uncomment for testing
+# from topics import Topics, Topic, get_topics      # Uncomment for testing in containers
 
 class Environment(Enum):
     DEV = 0
@@ -79,16 +79,36 @@ class MqttDevice:
         self.state = State.OFF
         self.client = mqtt.Client()
         self.env = self._set_environment()
+        self.client.on_connect = self._client_on_connect
+        self._connect_to_broker()
 
-    def _set_environment(self) -> Environment:
+
+    def publish_data(self, topic: Topic, message, timeout=1.0):
         """
-        Method to set the environment state for each device to drive environment specific behavior.
-        For example, the Ultrasonic sensor requires the GPIO library which can only be imported
-        when the container is running on the physical hardware.
+        Publishes data to the MQTT broker and verifies the connection status.
+
+        :param topic: Topic to publish
+        :param message: data to publish
+        :param timeout: the length of time to wait for a successful response
         """
-        if os.environ["ENVIRON"] == "PROD":
-            return Environment.PROD
-        return Environment.DEV
+
+        mqttMessage = self.client.publish(
+            topic = topic.topic,
+            qos = topic.qos,
+            payload = message
+        )
+        return self._validate_msg_publish(mqttMessage, topic, timeout)
+
+
+    def _client_on_connect(self, client, userdata, flags, return_code) -> bool:
+        """Callback for when device connects to MQTT broker."""
+        if return_code != 0:
+            print("Device could not connect, return code:", return_code)
+            return False
+
+        print("Device connected...")
+        return True
+
 
 
     def _connect_to_broker(self) -> None:    # Future state will raise exceptions with custom class
@@ -97,8 +117,6 @@ class MqttDevice:
         and starting the client event loop, returning a MQTTErrorCode that is used to set the connection status of the device.
 
         MQTTErrorCode values range from [-1, 16] with 0 representing "No Error" or "Success"
-
-        Example: self.connected = if not connect_to_broker() (if there is no error, set to True)
         """
 
         try:
@@ -117,21 +135,27 @@ class MqttDevice:
         self.state = State.ON
 
 
-    def publish_data(self, topic: Topic, message, timeout=1.0):
+    def _disconnect(self) -> None:
         """
-        Publishes data to the MQTT broker and verifies the connection status.
-
-        :param topic: Topic to publish
-        :param message: data to publish
-        :param timeout: the length of time to wait for a successful response
+        Method to disconnect the client from the MQTT broker. Ensures the state is set to OFF
+        and is published to the broker to enform the state machine, and disconnects the client.
         """
+        self.state = State.OFF
+        if self.client.is_connected():
+                self.publish_data(self.publishers.status, self.state, timeout=1.0),
+                self.client.loop_stop()
+                self.client.disconnect()
 
-        mqttMessage = self.client.publish(
-            topic = topic.topic,
-            qos = topic.qos,
-            payload = message
-        )
-        return self._validate_msg_publish(mqttMessage, topic, timeout)
+
+    def _set_environment(self) -> Environment:
+        """
+        Method to set the environment state for each device to drive environment specific behavior.
+        For example, the Ultrasonic sensor requires the GPIO library which can only be imported
+        when the container is running on the physical hardware.
+        """
+        if os.environ["ENVIRON"] == "PROD":
+            return Environment.PROD
+        return Environment.DEV
 
 
     def _validate_msg_publish(self, mqttMessage, topic, timeout=1.0) -> bool:
@@ -153,15 +177,3 @@ class MqttDevice:
                 return False
 
         return True
-
-
-    def _disconnect(self) -> None:
-        """
-        Method to disconnect the client from the MQTT broker. Ensures the state is set to OFF
-        and is published to the broker to enform the state machine, and disconnects the client.
-        """
-        self.state = State.OFF
-        if self.client.is_connected():
-                self.publish_data(self.publishers.status, self.state, timeout=1.0),
-                self.client.loop_stop()
-                self.client.disconnect()
