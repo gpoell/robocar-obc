@@ -1,31 +1,11 @@
-import math
 import time
-from enum import IntEnum
-from PCA9685 import PCA9685
-from ADC import Adc
-from client.mqtt_client import MqttDevice, ClientConfig, State
+from motor.PCA9685 import PCA9685
 
-class MotorChannels(IntEnum):
-    """
-    PWM channels for vehicle wheels used to determine direction of power supply.
-    """
-    LEFT_UPPER_FORWARD = 0
-    LEFT_UPPER_REVERSE = 1
-    LEFT_LOWER_REVERSE = 2
-    LEFT_LOWER_FORWARD = 3
-    RIGHT_LOWER_FORWARD = 4
-    RIGHT_LOWER_REVERSE = 5
-    RIGHT_UPPER_FORWARD = 6
-    RIGHT_UPPER_REVERSE = 7
-
-
-class Motor(MqttDevice):
+class Motor:
     """
     This class contains methods for operating the motor of the vehicle (driving forward, backward
-    and turning.). It is comprised of the ADC and PCA9685 (PWM) for determining rotation angles and
-    supplying power to the DC motors through PWM duty cycles, and it inherits from the MqttDevice
-    class so it can make event based decisions based on topics (i.e. obstacle avoidance given
-    distances from the Ultrasonic sensor.)
+    and turning.). It contains the PCA9685 (PWM) for determining power to the DC motors through
+    PWM duty cycles.
 
     The vehicle uses Differential Steering - a mechanism used to control the speed of independently
     powered wheels to turn the vehicle. During a turn, the wheels on the outer side of the turn must
@@ -59,17 +39,9 @@ class Motor(MqttDevice):
 
     def __init__(
         self,
-        client_config: ClientConfig,
-        rotation_delay: float = 2.5,
         pwm_address: int = 0x40,
         pwm_frequency: int = 50
     ) -> None:
-
-        if not isinstance(client_config, ClientConfig):
-            raise TypeError("Supported types for client_config are: <ClientConfig>")
-
-        if not isinstance(rotation_delay, (float, int)):
-            raise TypeError("Supported types for rotation delay are: <float>, <int>")
 
         if not isinstance(pwm_address, (int)):
             raise TypeError("Supported types for the PWM address are: <int>")
@@ -77,50 +49,7 @@ class Motor(MqttDevice):
         if not isinstance(pwm_address, (int)):
             raise TypeError("Supported types for the PWM frequency are: <int>")
 
-
-        super().__init__(client_config)
-
-        self.rotation_delay = rotation_delay
         self.pwm = PCA9685(pwm_address, pwm_frequency)
-        self.adc = Adc()
-        self.target_distance = 0      # Temporarily track distances from ultrasonic sensor
-
-        # Attach MQTT Event-Based Callbacks to Client
-        self.client.on_connect = self.client_on_connect
-        self.client.on_message = self.client_on_message
-        self._connect_to_broker()
-
-
-    def client_on_connect(self, client, userdata, flags, return_code) -> None:
-        """Client callback when ultrasonic sensor connects to MQTT broker. Temporary placehoder"""
-        if return_code != 0:
-            raise ValueError("Could not connect to MQTT Broker, return code:", return_code)
-
-        print("Motor is connected to the MQTT Broker...")
-
-
-    def client_on_message(self, client, userdata, msg) -> None:
-        """
-        Event based callback when receiving messages from the MQTT broker.
-        The types of messages received by the broker should reflect what is declared in the
-        Subscribers datatype.
-
-        :param client: reference to client instance connected to MQTT broker.
-        :param userdata: <TBD>
-        :param msg: incoming message from MQTT Broker.
-        """
-        message = msg.payload.decode()
-        topic = msg.topic
-
-        if topic == self.subscribers.appStatus and message != "active":
-            self.state = State.OFF
-
-        # Temporarily capture distance from Ultrasonic Sensor
-        # I think future state should let the State Machine interpret distances and drive behavior
-        if topic == self.subscribers.ultrasonicDistance.topic:
-            self.target_distance = float(message)
-
-
 
     # This method is being deprecated - logic belongs to the PCA9685 class which owns the resolution
     @staticmethod
@@ -332,30 +261,6 @@ class Motor(MqttDevice):
         self.right_lower_wheel(right_l)
 
 
-    # def __rotate(self, n):
-    #     """
-    #     DO NOT USE YET: Method for turning the vehicle based on a given angle?
-    #     """
-
-    #     angle = n
-    #     bat_compensate = 7.5 / (self.adc.recvADC(2) * 3)
-    #     while True:
-    #         W = 2000
-
-    #         VY = int(2000 * math.cos(math.radians(angle)))
-    #         VX = -int(2000 * math.sin(math.radians(angle)))
-
-    #         FR = VY - VX + W
-    #         FL = VY + VX - W
-    #         BL = VY - VX - W
-    #         BR = VY + VX + W
-
-    #         PWM.setMotorModel(FL, BL, FR, BR)
-    #         print("rotating")
-    #         time.sleep(5 * self.rotation_delay = rotation_delay * bat_compensate / 1000)
-    #         angle -= 5
-
-
     def stop(self) -> None:
         """
         Stops the vehicle by resetting the PWM duty cycle power supply.
@@ -395,14 +300,8 @@ class Motor(MqttDevice):
 
 
 if __name__ == '__main__':
-    from client.topics import MotorPublishers, MotorSubscribers, Topics
 
-    # Create Motor with topics and MQTT connection details
-    publishers = MotorPublishers()
-    subscribers = MotorSubscribers()
-    topics = Topics(publishers, subscribers)
-    clientConfig = ClientConfig(topics, host="mqtt-broker", port=1883)
-    motor = Motor(clientConfig)
+    motor = Motor()
 
     try:
         motor.set_motor_model(2000, 2000, 2000, 2000)  # Forward
