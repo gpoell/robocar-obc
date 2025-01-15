@@ -1,5 +1,5 @@
 import time
-from vehicle.vehicle import Vehicle
+from vehicle import Vehicle
 from client.topics import VehiclePublishers, VehicleSubscribers, Topics
 from client.mqtt_client import ClientConfig
 
@@ -24,16 +24,17 @@ def lane_keep_pipeline(distance: int, lane_model: list, motor_model: list) -> tu
     new_motor = motor_model.copy()
 
     # Stop if there is an obstacle
-    if obstacle_detection(distance): return [0, 0, 0, 0]
+    if obstacle_detection(distance):
+        return [0, 0, 0, 0]
 
-    # Stop if not on lane
-    if 1 not in lane_model: return [0, 0, 0, 0]
+    # # Stop if not on lane
+    # if 1 not in lane_model: return [0, 0, 0, 0]
 
-    # Drive straight if centered on line
-    if lane_model[1]: return [1000, 1000, 1000, 1000]
+    # # Drive straight if centered on line
+    # if lane_model[1]: return [1000, 1000, 1000, 1000]
 
     # Turn right
-    if lane_model[2]:
+    if lane_model[0]:
         new_motor[0] += 20
         new_motor[1] += 20
         new_motor[2] -= 20
@@ -41,12 +42,15 @@ def lane_keep_pipeline(distance: int, lane_model: list, motor_model: list) -> tu
         return new_motor
 
     # Turn left
-    if lane_model[0]:
+    if lane_model[2]:
         new_motor[0] -= 20
         new_motor[1] -= 20
         new_motor[2] += 20
         new_motor[3] += 20
         return new_motor
+
+    # Else drive forward
+    return [1000, 1000, 1000, 1000]
 
 
 def main():
@@ -70,10 +74,10 @@ def main():
 
     try:
         while vehicle.state:
-            time.sleep(0.02)    # Sample at 50 HZ
+            time.sleep(0.005)    # Sample at 50 HZ
             # Step 1: Collect sensor data
             distance = vehicle.target_distance
-            lane_model = vehicle.lane_position
+            lane_model = vehicle.lane_model
 
             # Step 2: Scale the PWM duty cycles for wheels
             mm = lane_keep_pipeline(distance, lane_model, motor_model)
@@ -85,8 +89,8 @@ def main():
             print(f"Obstacle Distance: {vehicle.target_distance} | Lane Model: {lane_model} | PWM: {motor_model}")
 
             # Stop Motor if there is an obstacle or if it falls off track
-            if sum(motor_model) == 0:
-                break
+            # if sum(motor_model) == 0:
+            #     break
 
 
             # # Step 3: Stop the vehicle if it reaches an obstacle
