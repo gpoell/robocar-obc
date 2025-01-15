@@ -10,13 +10,14 @@ services:
       - ENVIRON=${ENVIRON}
 
 
-  motor:
-    build: ./src/motor
+  vehicle:
+    build: ./src/vehicle
     tty: true
-    container_name: motor
+    container_name: vehicle
     volumes:
-      - ./src/motor:/app
+      - ./src/vehicle:/app
       - ./src/client:/app/client
+      - ./src/motor:/app/motor
     privileged: true
     environment:
       - ENVIRON=${ENVIRON}
