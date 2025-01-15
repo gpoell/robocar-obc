@@ -19,38 +19,40 @@ def obstacle_detection(distance: int) -> bool:
     return True if distance < 30 else False
 
 
+infra_gap_count = 0
+
+
 def lane_keep_pipeline(distance: int, lane_model: list, motor_model: list) -> tuple:
 
     new_motor = motor_model.copy()
+    global infra_gap_count
 
     # Stop if there is an obstacle
-    if obstacle_detection(distance):
-        return [0, 0, 0, 0]
+    if obstacle_detection(distance): return [0, 0, 0, 0]
 
-    # # Stop if not on lane
-    # if 1 not in lane_model: return [0, 0, 0, 0]
+    # Turn hard right
+    if lane_model[1] or lane_model[2]:
+        new_motor[0] -= 10
+        new_motor[1] -= 10
+        new_motor[2] -= 20
+        new_motor[3] -= 20
+        infra_gap_count = 0
+        return new_motor
 
-    # # Drive straight if centered on line
-    # if lane_model[1]: return [1000, 1000, 1000, 1000]
 
-    # Turn right
+    # Turn slow right
     if lane_model[0]:
         new_motor[0] += 20
         new_motor[1] += 20
-        new_motor[2] -= 20
-        new_motor[3] -= 20
+        new_motor[2] -= 10
+        new_motor[3] -= 10
+        infra_gap_count = 0
         return new_motor
 
-    # Turn left
-    if lane_model[2]:
-        new_motor[0] -= 20
-        new_motor[1] -= 20
-        new_motor[2] += 20
-        new_motor[3] += 20
-        return new_motor
+    # Drive straight if no line
+    if 1 not in lane_model: return [500, 500, 500, 500]
 
-    # Else drive forward
-    return [1000, 1000, 1000, 1000]
+    return motor_model
 
 
 def main():
@@ -82,26 +84,14 @@ def main():
             # Step 2: Scale the PWM duty cycles for wheels
             mm = lane_keep_pipeline(distance, lane_model, motor_model)
             motor_model = mm
+
+            # Step 3: Set motor speed
             vehicle.drive(motor_model[0], motor_model[1], motor_model[2], motor_model[3])
-            # wheels_power = obstacle_detection(distance)
-            # motor.drive(wheels_power)
-            # print(f"Distance to obstacle: {motor.target_distance} | PWM: {wheels_power}")
             print(f"Obstacle Distance: {vehicle.target_distance} | Lane Model: {lane_model} | PWM: {motor_model}")
 
             # Stop Motor if there is an obstacle or if it falls off track
-            # if sum(motor_model) == 0:
-            #     break
-
-
-            # # Step 3: Stop the vehicle if it reaches an obstacle
-            # if wheels_power == 0:
-            #     # motor.stop()
-            #     motor.drive(0)
-            #     time.sleep(2)
-
-            #     # Step 4: Turn the vehicle 180 degrees
-            #     motor.turn_around(turn_cycles=3)
-            #     time.sleep(1)
+            if sum(motor_model) == 0:
+                break
 
     except KeyboardInterrupt:
         print("Vehicle was manually stopped..")
