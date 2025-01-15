@@ -159,9 +159,9 @@ class VehicleSubscribers(Subscribers):
 
     appStatus: Topic = Topic(topic="app/status", qos=1)
     ultrasonicDistance: Topic = Topic(topic=UltrasonicPublishers.distance.topic, qos=1)
-    irleft: Topic = Topic(topic=InfraredPublishers.irleft, qos=1)
-    irmiddle: Topic = Topic(topic=InfraredPublishers.irmiddle, qos=1)
-    irright: Topic = Topic(topic=InfraredPublishers.irright, qos=1)
+    irleft: Topic = Topic(topic=InfraredPublishers.irleft.topic, qos=1)
+    irmiddle: Topic = Topic(topic=InfraredPublishers.irmiddle.topic, qos=1)
+    irright: Topic = Topic(topic=InfraredPublishers.irright.topic, qos=1)
 
 
 
