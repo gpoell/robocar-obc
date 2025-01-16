@@ -80,6 +80,7 @@ class MqttDevice:
         self.client = mqtt.Client()
         self.env = self._set_environment()
         self.client.on_connect = self._client_on_connect
+        self.client.on_disconnect = self._client_on_disconnect
         self._connect_to_broker()
 
 
@@ -109,6 +110,15 @@ class MqttDevice:
         print("Device connected...")
         return True
 
+
+    def _client_on_disconnect(self, client, userdata, flags, return_code) -> bool:
+        """Callback for when device connects to MQTT broker."""
+        if return_code != 0:
+            print("Device faced an error on disconnect, return code:", return_code)
+            return False
+
+        print("Device successfully disconnected...")
+        return True
 
 
     def _connect_to_broker(self) -> None:    # Future state will raise exceptions with custom class
