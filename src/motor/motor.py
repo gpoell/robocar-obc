@@ -1,5 +1,61 @@
 import time
+from dataclasses import dataclass
 from motor.PCA9685 import PCA9685
+
+
+@dataclass(frozen=True)
+class MotorTerminals:
+    """Motor terminals for each wheel."""
+
+    left_upper_forward: int = 0
+    left_upper_reverse: int = 1
+    left_lower_reverse: int = 2
+    left_lower_forward: int = 3
+    right_lower_forward: int = 4
+    right_lower_reverse: int = 5
+    right_upper_forward: int = 6
+    right_upper_reverse: int = 7
+
+
+class Wheel:
+    """
+    Wheels are powered by DC motors that supply power to terminals
+    to determine the speed and direction which they turn.
+
+    @param  forward:    datasheet specification for forward terminal
+    @param  reverse:    datasheet specification for reverse terminal
+    """
+
+    def __init__(
+        self,
+        forward: MotorTerminals,
+        reverse: MotorTerminals
+    ) -> None:
+
+        if not isinstance(forward, (MotorTerminals)):
+            raise TypeError("Supported types for wheel terminals are: <MotorTerminals>. Please consult datatype for correct value.")
+
+        if not isinstance(reverse, (MotorTerminals)):
+            raise TypeError("Supported types for wheel terminals are: <MotorTerminals>. Please consult datatype for correct value.")
+
+        self.forward = forward
+        self.reverse = reverse
+
+    def set_speed(self, pwm, duty) -> None:
+        """Method for setting the speed and direction of a wheel."""
+
+        if duty > 0:
+            self.pwm.set_motor_pwm(self.reverse, 0)
+            self.pwm.set_motor_pwm(self.forward, duty)
+
+        elif duty < 0:
+            self.pwm.set_motor_pwm(self.forward, 0)
+            self.pwm.set_motor_pwm(self.reverse, abs(duty))
+
+        else:
+            self.pwm.set_motor_pwm(self.reverse, 0)
+            self.pwm.set_motor_pwm(self.forward, 0)
+
 
 class Motor:
     """
@@ -50,6 +106,7 @@ class Motor:
             raise TypeError("Supported types for the PWM frequency are: <int>")
 
         self.pwm = PCA9685(pwm_address, pwm_frequency)
+        self.wheel_left_lower = Wheel(forward=MotorTerminals.left_lower_forward, reverse=MotorTerminals.left_lower_reverse)
 
     # This method is being deprecated - logic belongs to the PCA9685 class which owns the resolution
     @staticmethod
