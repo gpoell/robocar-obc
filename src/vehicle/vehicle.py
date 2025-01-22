@@ -1,3 +1,4 @@
+from time import sleep
 from client.mqtt_client import MqttDevice, ClientConfig, State
 from motor.motor import Motor
 
@@ -56,14 +57,119 @@ class Vehicle(MqttDevice):
         Sets the speed and direction of the vehicle by providing PWM duty cycles
         for all of the wheels.
         """
-        self.motor.set_motor_model(
-            left_upper_duty=lu_pwm,
-            left_lower_duty=ll_pwm,
-            right_upper_duty=ru_pwm,
-            right_lower_duty=rl_pwm
+        self.motor.drive(
+            l_u_duty=lu_pwm,
+            l_l_duty=ll_pwm,
+            r_u_duty=ru_pwm,
+            r_l_duty=rl_pwm
         )
 
     def stop(self) -> None:
         """Stops the motor and disconnect from the MQTT Broker."""
         self.motor.stop()
         self._disconnect()
+
+
+    def drive_left(self, left_wheels_duty: int, right_wheels_duty: int) -> None:
+        """
+        Provide positive PWM duty cycles to drive the vehicle to the left by supplying higher power to the right
+        wheels and lower power to the left wheels.
+        """
+
+        # Ensure positive PWM duty cycle to handle direction
+        left_wheels_duty = abs(left_wheels_duty)
+        right_wheels_duty = abs(right_wheels_duty)
+
+        if right_wheels_duty < left_wheels_duty:
+            raise ValueError("Driving to the left requires higher PWM duty cycles for the right wheels.")
+
+        self.motor.drive(left_wheels_duty, left_wheels_duty, right_wheels_duty, right_wheels_duty)
+
+
+    def drive_right(self, left_wheels_duty: int, right_wheels_duty: int) -> None:
+        """
+        Provide positive PWM duty cycles to drive the vehicle to the right by supplying higher power to the right
+        wheels and lower power to the left wheels.
+        """
+
+        # Ensure positive PWM duty cycle to handle direction
+        left_wheels_duty = abs(left_wheels_duty)
+        right_wheels_duty = abs(right_wheels_duty)
+
+        if right_wheels_duty > left_wheels_duty:
+            raise ValueError("Driving to the right requires higher PWM duty cycles for the left wheels.")
+
+        self.motor.drive(left_wheels_duty, left_wheels_duty, right_wheels_duty, right_wheels_duty)
+
+
+    def reverse(self, pwm_duty: int) -> None:
+        """
+        Provide a positive PWM duty cycle to reverse the vehicle
+        by supplying consistent power to all 4 wheels.
+        """
+
+        # Ensure positive PWM duty cycle to handle direction
+        pwm_duty = abs(pwm_duty)
+
+        self.motor.drive(-pwm_duty, -pwm_duty, -pwm_duty, -pwm_duty)
+
+
+    def reverse_left(self, left_wheels_duty: int, right_wheels_duty: int) -> None:
+        """
+        Provide positive PWM duty cycles to reverse the vehicle to the left by supplying higher power to the right
+        wheels and lower power to the left wheels.
+        """
+
+        # Ensure positive PWM duty cycle to handle direction
+        left_wheels_duty = abs(left_wheels_duty)
+        right_wheels_duty = abs(right_wheels_duty)
+
+        if right_wheels_duty < left_wheels_duty:
+            raise ValueError("Reversing to the left requires higher PWM duty cycles for the right wheels.")
+
+        self.motor.drive(-left_wheels_duty, -left_wheels_duty, -right_wheels_duty, -right_wheels_duty)
+
+
+    def reverse_right(self, left_wheels_duty: int, right_wheels_duty: int) -> None:
+        """
+        Provide positive PWM duty cycles to reverse the vehicle to the right by supplying higher power to the left
+        wheels and lower power to the right wheels.
+        """
+
+        # Ensure positive PWM duty cycle to handle direction
+        left_wheels_duty = abs(left_wheels_duty)
+        right_wheels_duty = abs(right_wheels_duty)
+
+        if right_wheels_duty > left_wheels_duty:
+            raise ValueError("Reversing to the right requires higher PWM duty cycles for the left wheels.")
+
+        self.motor.drive(-left_wheels_duty, -left_wheels_duty, -right_wheels_duty, -right_wheels_duty)
+
+
+    def turn_around(self, turn_cycles: int=3) -> None:
+        """
+        (Testing) Turns the vehicle approximately 180 degrees.
+        Multiple variables such as floor friction and differential speed ratios
+        impact the turning radius.
+
+        This method requires calibration. Currently, 4 turn cycle results in a 90
+        degree turn, so 8 cycles is 180 degrees.
+        """
+
+        for _ in range(turn_cycles):
+            self.drive_left(300, 3200)
+            sleep(0.5)
+
+            # Pause
+            self.set_motor_model(0, 0, 0, 0)
+            sleep(0.5)
+
+            self.reverse_right(3200, 300)
+            sleep(0.5)
+
+            # Pause
+            self.motor.drive(0, 0, 0, 0)
+            sleep(0.5)
+
+
+        self.motor.drive(0, 0, 0, 0)
