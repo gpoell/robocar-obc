@@ -3,18 +3,22 @@ from dataclasses import dataclass
 from PCA9685 import PCA9685
 
 
+class MotorTerminal:
+    """Wheel motors contain forward and reverse terminals."""
+
+    def __init__(self, forward: int, reverse: int) -> None:
+        self.forward = forward
+        self.reverse = reverse
+
+
 @dataclass(frozen=True)
 class MotorTerminals:
-    """Motor terminals for each wheel."""
+    """Motor terminals for each wheel as specified by the datasheet."""
 
-    left_upper_forward: int = 0
-    left_upper_reverse: int = 1
-    left_lower_reverse: int = 2
-    left_lower_forward: int = 3
-    right_lower_forward: int = 4
-    right_lower_reverse: int = 5
-    right_upper_forward: int = 6
-    right_upper_reverse: int = 7
+    left_upper: MotorTerminal = MotorTerminal(forward=0, reverse=1)
+    left_lower: MotorTerminal = MotorTerminal(forward=3, reverse=2)
+    right_lower: MotorTerminal = MotorTerminal(forward=4, reverse=5)
+    right_upper: MotorTerminal = MotorTerminal(forward=6, reverse=7)
 
 
 class Wheel:
@@ -22,39 +26,35 @@ class Wheel:
     Wheels are powered by DC motors that supply power to terminals
     to determine the speed and direction which they turn.
 
-    @param  forward:    datasheet specification for forward terminal
-    @param  reverse:    datasheet specification for reverse terminal
+    @param  terminal:   the MotorTerminal containing forward and reverse terminals
     """
 
     def __init__(
         self,
-        forward: MotorTerminals,
-        reverse: MotorTerminals
+        terminal: MotorTerminal,
     ) -> None:
 
-        if not isinstance(forward, (MotorTerminals)):
-            raise TypeError("Supported types for wheel terminals are: <MotorTerminals>. Please consult datatype for correct value.")
+        if not isinstance(terminal, (MotorTerminal)):
+            raise TypeError("Supported types for wheel terminals are: <MotorTerminal>. Please consult datatype for correct value.")
 
-        if not isinstance(reverse, (MotorTerminals)):
-            raise TypeError("Supported types for wheel terminals are: <MotorTerminals>. Please consult datatype for correct value.")
-
-        self.forward = forward
-        self.reverse = reverse
+        self.forward = terminal.forward
+        self.reverse = terminal.reverse
+        self.speed = 0
 
     def set_speed(self, pwm, duty) -> None:
         """Method for setting the speed and direction of a wheel."""
 
         if duty > 0:
-            self.pwm.set_motor_pwm(self.reverse, 0)
-            self.pwm.set_motor_pwm(self.forward, duty)
+            pwm.set_motor_pwm(self.reverse, 0)
+            pwm.set_motor_pwm(self.forward, duty)
 
         elif duty < 0:
-            self.pwm.set_motor_pwm(self.forward, 0)
-            self.pwm.set_motor_pwm(self.reverse, abs(duty))
+            pwm.set_motor_pwm(self.forward, 0)
+            pwm.set_motor_pwm(self.reverse, abs(duty))
 
         else:
-            self.pwm.set_motor_pwm(self.reverse, 0)
-            self.pwm.set_motor_pwm(self.forward, 0)
+            pwm.set_motor_pwm(self.reverse, 0)
+            pwm.set_motor_pwm(self.forward, 0)
 
 
 class Motor:
@@ -83,16 +83,6 @@ class Motor:
 
     """
 
-    __LEFT_UPPER_FORWARD = 0
-    __LEFT_UPPER_REVERSE = 1
-    __LEFT_LOWER_REVERSE = 2
-    __LEFT_LOWER_FORWARD = 3
-    __RIGHT_LOWER_FORWARD = 4
-    __RIGHT_LOWER_REVERSE = 5
-    __RIGHT_UPPER_FORWARD = 6
-    __RIGHT_UPPER_REVERSE = 7
-
-
     def __init__(
         self,
         pwm_address: int = 0x40,
@@ -106,7 +96,10 @@ class Motor:
             raise TypeError("Supported types for the PWM frequency are: <int>")
 
         self.pwm = PCA9685(pwm_address, pwm_frequency)
-        self.wheel_left_lower = Wheel(forward=MotorTerminals.left_lower_forward, reverse=MotorTerminals.left_lower_reverse)
+        self.wheel_left_lower = Wheel(terminal=MotorTerminals.left_lower)
+        self.wheel_left_upper = Wheel(terminal=MotorTerminals.left_upper)
+        self.wheel_right_lower = Wheel(terminal=MotorTerminals.right_lower)
+        self.wheel_right_upper = Wheel(terminal=MotorTerminals.right_upper)
 
 
     def drive(self, pwm_duty: int) -> None:
@@ -287,11 +280,42 @@ class Motor:
         self.right_lower_wheel(right_lower_duty)
 
 
+    def new_drive(self, l_u_duty: int, l_l_duty: int, r_u_duty: int, r_l_duty: int) -> None:
+        """
+        Sets the speed and direction of the vehicle by providing PWM duty cycles
+        for all of the wheels.
+        """
+
+        self.wheel_left_upper.set_speed(pwm=self.pwm, duty=l_u_duty)
+        self.wheel_left_lower.set_speed(pwm=self.pwm, duty=l_l_duty)
+        self.wheel_right_upper.set_speed(pwm=self.pwm, duty=r_u_duty)
+        self.wheel_right_lower.set_speed(pwm=self.pwm, duty=r_l_duty)
+
+
+    def new_set_speed(self, wheel: Wheel, duty: int) -> None:
+        """
+        Sets the speed and direction of the vehicle by providing PWM duty cycles
+        for all of the wheels.
+        """
+
+        if duty > 0:
+            self.pwm.set_motor_pwm(wheel.reverse, 0)
+            self.pwm.set_motor_pwm(wheel.forward, duty)
+
+        elif duty < 0:
+            self.pwm.set_motor_pwm(wheel.forward, 0)
+            self.pwm.set_motor_pwm(wheel.reverse, abs(duty))
+
+        else:
+            self.pwm.set_motor_pwm(wheel.reverse, 0)
+            self.pwm.set_motor_pwm(wheel.forward, 0)
+
+
     def stop(self) -> None:
         """
         Stops the vehicle by resetting the PWM duty cycle power supply.
         """
-        self.set_motor_model(0, 0, 0, 0)
+        self.new_drive(0, 0, 0, 0)
         self.pwm.close()
 
 
@@ -330,15 +354,15 @@ if __name__ == '__main__':
     motor = Motor()
 
     try:
-        motor.set_motor_model(2000, 2000, 2000, 2000)  # Forward
+        motor.new_drive(2000, 2000, 2000, 2000)  # Forward
         time.sleep(1)
-        motor.set_motor_model(-2000, -2000, -2000, -2000)  # Back
+        motor.new_drive(-2000, -2000, -2000, -2000)  # Back
         time.sleep(1)
-        motor.set_motor_model(4000, 4000, 50, 50)  # Right
+        motor.new_drive(4000, 4000, 50, 50)  # Right
         time.sleep(0.5)
-        motor.set_motor_model(50, 50, 4000, 4000)  # Left
+        motor.new_drive(50, 50, 4000, 4000)  # Left
         time.sleep(0.5)
-        motor.turn_around(turn_cycles=3)    # Spin 180 degrees
+        # motor.turn_around(turn_cycles=3)    # Spin 180 degrees
         motor.stop()    # Stop
 
     except KeyboardInterrupt:
