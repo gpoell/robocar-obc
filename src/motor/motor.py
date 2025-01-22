@@ -1,6 +1,6 @@
 import time
 from dataclasses import dataclass
-from motor.PCA9685 import PCA9685
+from PCA9685 import PCA9685
 
 
 @dataclass(frozen=True)
@@ -107,36 +107,6 @@ class Motor:
 
         self.pwm = PCA9685(pwm_address, pwm_frequency)
         self.wheel_left_lower = Wheel(forward=MotorTerminals.left_lower_forward, reverse=MotorTerminals.left_lower_reverse)
-
-    # This method is being deprecated - logic belongs to the PCA9685 class which owns the resolution
-    @staticmethod
-    def duty_range(duty1, duty2, duty3, duty4):
-        """
-        Limits the duty cycle range to 12-bit resolution of the PWM.
-        Currently used by set_motor_model()
-        """
-
-        if duty1 > 4095:
-            duty1 = 4095
-        elif duty1 < -4095:
-            duty1 = -4095
-
-        if duty2 > 4095:
-            duty2 = 4095
-        elif duty2 < -4095:
-            duty2 = -4095
-
-        if duty3 > 4095:
-            duty3 = 4095
-        elif duty3 < -4095:
-            duty3 = -4095
-
-        if duty4 > 4095:
-            duty4 = 4095
-        elif duty4 < -4095:
-            duty4 = -4095
-
-        return duty1, duty2, duty3, duty4
 
 
     def drive(self, pwm_duty: int) -> None:
@@ -311,11 +281,10 @@ class Motor:
         for all of the wheels.
         """
 
-        left_u, left_l, right_u, right_l = self.duty_range(left_upper_duty, left_lower_duty, right_upper_duty, right_lower_duty)
-        self.left_upper_wheel(left_u)
-        self.left_lower_wheel(left_l)
-        self.right_upper_wheel(right_u)
-        self.right_lower_wheel(right_l)
+        self.left_upper_wheel(left_upper_duty)
+        self.left_lower_wheel(left_lower_duty)
+        self.right_upper_wheel(right_upper_duty)
+        self.right_lower_wheel(right_lower_duty)
 
 
     def stop(self) -> None:

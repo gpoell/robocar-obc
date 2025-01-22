@@ -91,6 +91,7 @@ class PCA9685:
     def set_pwm(self, channel: int, on: int, off: int) -> None:
         "Sets a single PWM channel"
 
+        off = self.duty_range(off)
         self.write(self.__LED0_ON_L+4*channel, on & 0xFF)
         self.write(self.__LED0_ON_H+4*channel, on >> 8)
         self.write(self.__LED0_OFF_L+4*channel, off & 0xFF)
@@ -99,7 +100,7 @@ class PCA9685:
 
     def set_motor_pwm(self, channel: int, duty: int) -> None:
         """Wrapper function for setting the motor PWM."""
-        self.set_pwm(channel, 0, duty)
+        self.set_pwm(channel=channel, on=0, off=duty)
 
 
     def set_servo_pulse(self, channel: int, pulse: int) -> None:

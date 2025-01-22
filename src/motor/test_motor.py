@@ -1,5 +1,6 @@
 import unittest
-from motor.motor import Motor
+from motor import Motor
+from PCA9685 import PCA9685
 
 class TestMotor(unittest.TestCase):
     """
@@ -10,6 +11,7 @@ class TestMotor(unittest.TestCase):
     def setUp(self) -> None:
 
         self.motor = Motor()
+        self.pwm = PCA9685()
 
     def tearDown(self) -> None:
         pass
@@ -31,7 +33,14 @@ class TestMotor(unittest.TestCase):
     def test_duty_range(self):
         """Test the duty range method to ensure it returns tuple values within 12-bit (4905) resolution"""
 
-        test = self.motor.duty_range(5000, 40, -595, -5000)
-        expected = (4095, 40, -595, -4095)
 
-        self.assertIs(test, expected, "The duty range test values are not (4095, 40, -595, -4095)")
+        test_positive = self.pwm.duty_range(5000)
+        positive_expected = self.pwm.resolution
+        test_negative = self.pwm.duty_range(-5000)
+        negative_expected = -self.pwm.resolution
+
+        self.assertIs(test_positive, positive_expected, "The positive duty range test value is not 4095.")
+        self.assertEqual(test_negative, negative_expected, "The negative duty range test value is not -4095.")
+
+if __name__ == '__main__':
+    unittest.main()
