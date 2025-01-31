@@ -1,5 +1,47 @@
 services:
 
+  mqtt-broker:
+    image: eclipse-mosquitto:latest
+    container_name: mqtt-broker
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/logs:/mosquitto/logs
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+
+  tests:
+    build:
+      context: ./
+      dockerfile: ./src/services/unittests/Dockerfile
+    tty: true
+    container_name: tests
+    environment:
+      - ENVIRON=${ENVIRON}
+    develop:
+      watch:
+        - action: sync
+          path: ./src/tests
+          target: ./app/tests
+        - action: sync
+          path: ./src/parts
+          target: ./app/parts
+        - action: sync
+          path: ./src/client
+          target: ./app/client
+    depends_on:
+      - mqtt-broker
+
+
   app:
     build: ./src/app
     tty: true
@@ -49,24 +91,3 @@ services:
     privileged: true
     environment:
       - ENVIRON=${ENVIRON}
-
-
-
-
-  mqtt-broker:
-    image: eclipse-mosquitto:latest
-    container_name: mqtt-broker
-    ports:
-      - "1883:1883"
-      - "9001:9001"
-    volumes:
-      - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
-      - ./mosquitto/data:/mosquitto/data
-      - ./mosquitto/logs:/mosquitto/logs
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    deploy:
-      resources:
-        limits:
-          memory: 256M

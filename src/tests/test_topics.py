@@ -1,5 +1,5 @@
 import unittest
-from topics import Topics, Topic, Publishers, Subscribers, \
+from client.topics import Topics, Topic, Publishers, Subscribers, \
     UltrasonicPublishers, UltrasonicSubscribers, \
     MotorPublishers, MotorSubscribers,  \
     InfraredPublishers, InfraredSubscribers, \

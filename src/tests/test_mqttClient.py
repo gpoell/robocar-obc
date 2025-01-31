@@ -1,6 +1,6 @@
 import unittest
-from topics import Topics, Publishers, Subscribers, UltrasonicPublishers, UltrasonicSubscribers
-from mqtt_client import ClientConfig, MqttDevice, State, Environment
+from client.topics import Topics, Publishers, Subscribers, UltrasonicPublishers, UltrasonicSubscribers
+from client.mqtt_client import ClientConfig, MqttDevice, State, Environment
 
 class TestTopics(unittest.TestCase):
     """

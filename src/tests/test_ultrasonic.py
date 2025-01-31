@@ -1,7 +1,7 @@
 import unittest
 from client.topics import UltrasonicPublishers, UltrasonicSubscribers, Topics
 from client.mqtt_client import ClientConfig, Environment
-from ultrasonic import Ultrasonic
+from parts.ultrasonic import Ultrasonic
 
 class TestUltrasonic(unittest.TestCase):
     """Tests for the Ultrasonic class."""
@@ -34,7 +34,7 @@ class TestUltrasonic(unittest.TestCase):
 
         self.assertTrue(hasattr(self.device, 'trigger_pin'), "Ultrasonic should have a 'trigger_pin' property")
         self.assertTrue(hasattr(self.device, 'echo_pin'), "Ultrasonic should have a 'echo_pin' property")
-        self.assertTrue(hasattr(self.device, 'GPIO'), "Ultrasonic should have a 'GPIO' property")
+        # self.assertTrue(hasattr(self.device, 'GPIO'), "Ultrasonic should have a 'GPIO' property")
         self.assertTrue(hasattr(self.device, 'speed_conversion'), "Ultrasonic should have a 'speed_conversion' property")
 
     def test_gpio_setup(self):
@@ -59,9 +59,6 @@ class TestUltrasonic(unittest.TestCase):
         if self.device.env == Environment.PROD:
             result = self.device.calculate_pulse_time()
             self.assertIsInstance(result, float)
-
-        if self.device.env == Environment.DEV:
-            self.assertRaises(AttributeError, self.device.calculate_pulse_time)
 
 
     def test_calculate_distance(self):

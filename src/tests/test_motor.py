@@ -1,6 +1,6 @@
 import unittest
-from motor import Motor
-from PCA9685 import PCA9685
+from parts.motor import Motor
+from parts.PCA9685 import PCA9685
 
 class TestMotor(unittest.TestCase):
     """
