@@ -111,7 +111,7 @@ class MqttDevice:
         return True
 
 
-    def _client_on_disconnect(self, client, userdata, flags, return_code) -> bool:
+    def _client_on_disconnect(self, client, userdata, return_code) -> bool:
         """Callback for when device connects to MQTT broker."""
         if return_code != 0:
             print("Device faced an error on disconnect, return code:", return_code)
