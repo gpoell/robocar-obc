@@ -131,12 +131,10 @@ class Ultrasonic(MqttDevice):
         :param freq: the sampling rate of the ultrasonic sensor.
         """
 
-        # Connect to MQTT Broker to turn device ON
-        self._connect_to_broker()
-
         while self.state == State.ON:
             time.sleep(freq)
             distance = self.calculate_distance()
+            print(distance)
             thread_count = threading.active_count()
 
             responses = [
@@ -158,3 +156,24 @@ class Ultrasonic(MqttDevice):
         self._disconnect()
         if self.env == Environment.PROD:
             self.GPIO.cleanup()
+
+
+if __name__ == "__main__":
+
+    from client.topics import Topics, UltrasonicPublishers, UltrasonicSubscribers
+
+    publishers = UltrasonicPublishers()
+    subscribers = UltrasonicSubscribers()
+    topics = Topics(publishers, subscribers)
+    clientConfig = ClientConfig(topics, host="mqtt-broker", port=1883)
+    ultrasonic = Ultrasonic(clientConfig, trig=27, echo=22)
+
+    try:
+        ultrasonic.run(freq=0.05)
+    except KeyboardInterrupt:
+        print("Disconnecting...")
+    except ValueError as e:
+        raise ValueError from e
+    finally:
+        ultrasonic.stop()
+        print("Ultrasonic sensor stopped..")
