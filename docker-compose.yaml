@@ -22,7 +22,7 @@ services:
   tests:
     build:
       context: ./
-      dockerfile: ./src/services/unittests/Dockerfile
+      dockerfile: ./src/services/unittests/
     command: python -m unittest discover -s tests
     container_name: tests
     environment:
@@ -58,18 +58,28 @@ services:
       - mqtt-broker
 
 
-
   vehicle:
-    build: ./src/vehicle
-    tty: true
+    build:
+      context: ./
+      dockerfile: ./src/services/vehicle/
     container_name: vehicle
-    volumes:
-      - ./src/vehicle:/app
-      - ./src/client:/app/client
-      - ./src/motor:/app/motor
+    tty: true
     privileged: true
     environment:
       - ENVIRON=${ENVIRON}
+    develop:
+      watch:
+        - action: sync
+          path: src/services/vehicle
+          target: app/
+        - action: sync
+          path: src/parts
+          target: app/parts
+        - action: sync
+          path: src/client
+          target: app/client
+    depends_on:
+      - mqtt-broker
 
 
   ultrasonic:

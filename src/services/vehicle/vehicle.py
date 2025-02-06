@@ -1,6 +1,6 @@
 from time import sleep
 from client.mqtt_client import MqttDevice, ClientConfig, State
-from motor.motor import Motor
+from parts.motor import Motor
 
 class Vehicle(MqttDevice):
     """
@@ -173,3 +173,23 @@ class Vehicle(MqttDevice):
 
 
         self.motor.drive(0, 0, 0, 0)
+
+
+if __name__ == "__main__":
+    from client.topics import VehiclePublishers, VehicleSubscribers, Topics
+    from client.mqtt_client import ClientConfig
+    from time import sleep
+
+    # Create Motor with topics and MQTT connection details
+    publishers = VehiclePublishers()
+    subscribers = VehicleSubscribers()
+    topics = Topics(publishers, subscribers)
+    clientConfig = ClientConfig(topics, host="mqtt-broker", port=1883)
+    vehicle = Vehicle(clientConfig)
+
+    try:
+        vehicle.drive(2000, 2000, 2000, 2000)  # Forward
+        sleep(1)
+        vehicle.stop()
+    except KeyboardInterrupt:
+        vehicle.stop()
