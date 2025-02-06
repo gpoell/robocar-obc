@@ -34,7 +34,7 @@ class TestUltrasonic(unittest.TestCase):
 
         self.assertTrue(hasattr(self.device, 'trigger_pin'), "Ultrasonic should have a 'trigger_pin' property")
         self.assertTrue(hasattr(self.device, 'echo_pin'), "Ultrasonic should have a 'echo_pin' property")
-        # self.assertTrue(hasattr(self.device, 'GPIO'), "Ultrasonic should have a 'GPIO' property")
+        self.assertTrue(hasattr(self.device, 'GPIO'), "Ultrasonic should have a 'GPIO' property")
         self.assertTrue(hasattr(self.device, 'speed_conversion'), "Ultrasonic should have a 'speed_conversion' property")
 
     def test_gpio_setup(self):
