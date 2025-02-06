@@ -23,10 +23,11 @@ services:
     build:
       context: ./
       dockerfile: ./src/services/unittests/Dockerfile
-    tty: true
     container_name: tests
     environment:
       - ENVIRON=${ENVIRON}
+    privileged: true
+    tty: true
     develop:
       watch:
         - action: sync
