@@ -1,7 +1,7 @@
 import unittest
 from client.topics import Topics, Topic, Publishers, Subscribers, \
     UltrasonicPublishers, UltrasonicSubscribers, \
-    MotorPublishers, MotorSubscribers,  \
+    VehiclePublishers, VehicleSubscribers,  \
     InfraredPublishers, InfraredSubscribers, \
     get_topics
 
@@ -118,20 +118,20 @@ class TestTopics(unittest.TestCase):
         - status
         """
 
-        motor_pub = MotorPublishers()
+        motor_pub = VehiclePublishers()
 
-        self.assertTrue(hasattr(motor_pub, 'luPWM'), "MotorPublishers should have a 'luPWM' property")
-        self.assertTrue(hasattr(motor_pub, 'llPWM'), "MotorPublishers should have a 'llPWM' property")
-        self.assertTrue(hasattr(motor_pub, 'ruPWM'), "MotorPublishers should have a 'ruPWM' property")
-        self.assertTrue(hasattr(motor_pub, 'rlPWM'), "MotorPublishers should have a 'rlPWM' property")
-        self.assertTrue(hasattr(motor_pub, 'threads'), "MotorPublishers should have a 'threads' property")
-        self.assertTrue(hasattr(motor_pub, 'status'), "MotorPublishers should have a 'status' property")
+        self.assertTrue(hasattr(motor_pub, 'luPWM'), "VehiclePublishers should have a 'luPWM' property")
+        self.assertTrue(hasattr(motor_pub, 'llPWM'), "VehiclePublishers should have a 'llPWM' property")
+        self.assertTrue(hasattr(motor_pub, 'ruPWM'), "VehiclePublishers should have a 'ruPWM' property")
+        self.assertTrue(hasattr(motor_pub, 'rlPWM'), "VehiclePublishers should have a 'rlPWM' property")
+        self.assertTrue(hasattr(motor_pub, 'threads'), "VehiclePublishers should have a 'threads' property")
+        self.assertTrue(hasattr(motor_pub, 'status'), "VehiclePublishers should have a 'status' property")
 
 
     def test_motor_publishers_property_types(self):
         """Test to ensure MotorPublisher instances contain Topic values."""
 
-        motor_pub = MotorPublishers()
+        motor_pub = VehiclePublishers()
 
         self.assertIsInstance(motor_pub.luPWM, Topic)
         self.assertIsInstance(motor_pub.llPWM, Topic)
@@ -142,17 +142,21 @@ class TestTopics(unittest.TestCase):
 
 
     def test_motor_subscribers_properties_exist(self):
-        """Test to ensure MotorSubscribers contain properties: appStatus"""
+        """Test to ensure VehicleSubscribers contain properties: appStatus"""
 
-        motor_sub = MotorSubscribers()
+        motor_sub = VehicleSubscribers()
 
-        self.assertTrue(hasattr(motor_sub, 'appStatus'), "MotorSubscribers should have a 'appStatus' property")
+        self.assertTrue(hasattr(motor_sub, 'appStatus'), "VehicleSubscribers should have a 'appStatus' property")
+        self.assertTrue(hasattr(motor_sub, 'ultrasonicDistance'), "VehicleSubscribers should have a 'ultrasonicDistance' property")
+        self.assertTrue(hasattr(motor_sub, 'irleft'), "VehicleSubscribers should have a 'irleft' property")
+        self.assertTrue(hasattr(motor_sub, 'irmiddle'), "VehicleSubscribers should have a 'irmiddle' property")
+        self.assertTrue(hasattr(motor_sub, 'irright'), "VehicleSubscribers should have a 'irright' property")
 
 
     def test_motor_subscribers_property_types(self):
-        """Test to ensure MotorSubscribers contain Topic values."""
+        """Test to ensure VehicleSubscribers contain Topic values."""
 
-        motor_sub = MotorSubscribers()
+        motor_sub = VehicleSubscribers()
 
         self.assertIsInstance(motor_sub.appStatus, Topic)
 
