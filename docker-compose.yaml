@@ -23,11 +23,11 @@ services:
     build:
       context: ./
       dockerfile: ./src/services/unittests/Dockerfile
+    command: python -m unittest discover -s tests
     container_name: tests
     environment:
       - ENVIRON=${ENVIRON}
     privileged: true
-    tty: true
     develop:
       watch:
         - action: sync
