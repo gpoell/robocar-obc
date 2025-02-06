@@ -43,14 +43,20 @@ services:
       - mqtt-broker
 
 
-  app:
-    build: ./src/app
+  listener:
+    build: ./src/services/listener
     tty: true
-    container_name: app
-    volumes:
-      - ./src/app:/app
+    container_name: listener
     environment:
       - ENVIRON=${ENVIRON}
+    develop:
+      watch:
+        - action: sync
+          path: ./src/services/listener/main.py
+          target: ./app/main.py
+    depends_on:
+      - mqtt-broker
+
 
 
   vehicle:
