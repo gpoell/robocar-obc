@@ -138,7 +138,7 @@ class MqttDevice:
 
         except Exception as e:
             # Disconnect on any error and raise built in exception (future state fix ambiguity)
-            self.disconnect()
+            self._disconnect()
             raise e
 
         # Turn device on

@@ -12,9 +12,9 @@ WORKDIR /app
 
 # Docker-compose sets context at root level
 # Copy parts, client, and tests
-COPY ./src/tests .
-COPY ./src/client ./client
-COPY ./src/parts/ ./parts
+COPY ./src/tests ./tests
+COPY ./src/client ./tests/client
+COPY ./src/parts/ ./tests/parts
 COPY ./src/services/unittests/requirements.txt .
 
 # Install dependencies

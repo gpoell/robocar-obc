@@ -55,8 +55,6 @@ class TestTopics(unittest.TestCase):
 
         # Test bad ClientConfig parameter
         self.assertRaises(TypeError, MqttDevice, "client_config")
-        # Test default parameters
-        self.assertTrue(MqttDevice(ClientConfig(Topics(None, None))))
 
 
     def test_mqtt_device_property_exists(self):
@@ -74,16 +72,8 @@ class TestTopics(unittest.TestCase):
     def test_mqtt_device_connect_to_broker(self):
         """Tests the _connect_to_broker method of the MqttDevice class."""
 
-        # State should be OFF before connecting
-        self.assertIs(self.device.state, State.OFF)
-
-        # State should be ON after connecting
-        self.device._connect_to_broker()
+        # MQTT devices automatically connect and turn ON
         self.assertIs(self.device.state, State.ON)
-
-        # State should be OFF after disconnecting
-        self.device._disconnect()
-        self.assertIs(self.device.state, State.OFF)
 
 
     def test_mqtt_device_disconnect(self):

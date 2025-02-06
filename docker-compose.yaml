@@ -35,10 +35,10 @@ services:
           target: ./app/tests
         - action: sync
           path: ./src/parts
-          target: ./app/parts
+          target: ./app/tests/parts
         - action: sync
           path: ./src/client
-          target: ./app/client
+          target: ./app/tests/client
     depends_on:
       - mqtt-broker
 
