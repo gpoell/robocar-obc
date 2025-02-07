@@ -7,7 +7,9 @@ PORT = 1883
 
 # Set topics to subscribe to
 TOPIC_SUBSCRIBE = [
-    "device/ultrasonic/distance"
+    "device/infrared/left",
+    "device/infrared/middle",
+    "device/infrared/right"
 ]
 
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1)

@@ -108,14 +108,25 @@ services:
 
 
   infrared:
-    build: ./src/sensors/infrared
-    tty: true
+    build:
+      context: ./
+      dockerfile: ./src/services/infrared/Dockerfile
     container_name: infrared
-    volumes:
-      - ./src/sensors/infrared:/app
-      - ./src/client:/app/client
-
     working_dir: /app
+    tty: true
     privileged: true
     environment:
       - ENVIRON=${ENVIRON}
+    develop:
+      watch:
+        - action: sync
+          path: ./src/services/infrared
+          target: app/
+        - action: sync
+          path: src/parts
+          target: app/parts
+        - action: sync
+          path: src/client
+          target: app/client
+    depends_on:
+      - mqtt-broker
