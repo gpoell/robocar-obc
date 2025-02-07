@@ -1,0 +1,4 @@
+paho-mqtt
+gpiozero
+RPi.GPIO
+smbus3

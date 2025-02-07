@@ -1,58 +1,5 @@
 services:
 
-  app:
-    build: ./src/app
-    tty: true
-    container_name: app
-    volumes:
-      - ./src/app:/app
-    environment:
-      - ENVIRON=${ENVIRON}
-
-
-  vehicle:
-    build: ./src/vehicle
-    tty: true
-    container_name: vehicle
-    volumes:
-      - ./src/vehicle:/app
-      - ./src/client:/app/client
-      - ./src/motor:/app/motor
-    privileged: true
-    environment:
-      - ENVIRON=${ENVIRON}
-
-
-  ultrasonic:
-    build: ./src/sensors/ultrasonic
-    tty: true
-    container_name: sensor-ultrasonic
-    volumes:
-      - ./src/sensors/ultrasonic:/app
-      - ./src/client:/app/client
-
-    working_dir: /app
-    privileged: true
-    environment:
-      - ENVIRON=${ENVIRON}
-
-
-  infrared:
-    build: ./src/sensors/infrared
-    tty: true
-    container_name: infrared
-    volumes:
-      - ./src/sensors/infrared:/app
-      - ./src/client:/app/client
-
-    working_dir: /app
-    privileged: true
-    environment:
-      - ENVIRON=${ENVIRON}
-
-
-
-
   mqtt-broker:
     image: eclipse-mosquitto:latest
     container_name: mqtt-broker
@@ -70,3 +17,116 @@ services:
       resources:
         limits:
           memory: 256M
+
+
+  tests:
+    build:
+      context: ./
+      dockerfile: ./src/services/unittests/
+    command: python -m unittest discover -s tests
+    container_name: tests
+    environment:
+      - ENVIRON=${ENVIRON}
+    privileged: true
+    develop:
+      watch:
+        - action: sync
+          path: ./src/tests
+          target: ./app/tests
+        - action: sync
+          path: ./src/parts
+          target: ./app/tests/parts
+        - action: sync
+          path: ./src/client
+          target: ./app/tests/client
+    depends_on:
+      - mqtt-broker
+
+
+  listener:
+    build: ./src/services/listener
+    command: python main.py
+    container_name: listener
+    environment:
+      - ENVIRON=${ENVIRON}
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./src/services/listener/main.py
+          target: ./app/main.py
+    depends_on:
+      - mqtt-broker
+
+
+  vehicle:
+    build:
+      context: ./
+      dockerfile: ./src/services/vehicle
+    container_name: vehicle
+    tty: true
+    privileged: true
+    environment:
+      - ENVIRON=${ENVIRON}
+    develop:
+      watch:
+        - action: sync
+          path: src/services/vehicle
+          target: app/
+        - action: sync
+          path: src/parts
+          target: app/parts
+        - action: sync
+          path: src/client
+          target: app/client
+    depends_on:
+      - mqtt-broker
+
+
+  ultrasonic:
+    build:
+      context: ./
+      dockerfile: ./src/services/ultrasonic/Dockerfile
+    container_name: ultrasonic
+    working_dir: /app
+    tty: true
+    privileged: true
+    environment:
+      - ENVIRON=${ENVIRON}
+    develop:
+      watch:
+        - action: sync
+          path: ./src/services/ultrasonic
+          target: app/
+        - action: sync
+          path: src/parts
+          target: app/parts
+        - action: sync
+          path: src/client
+          target: app/client
+    depends_on:
+      - mqtt-broker
+
+
+  infrared:
+    build:
+      context: ./
+      dockerfile: ./src/services/infrared/Dockerfile
+    container_name: infrared
+    working_dir: /app
+    tty: true
+    privileged: true
+    environment:
+      - ENVIRON=${ENVIRON}
+    develop:
+      watch:
+        - action: sync
+          path: ./src/services/infrared
+          target: app/
+        - action: sync
+          path: src/parts
+          target: app/parts
+        - action: sync
+          path: src/client
+          target: app/client
+    depends_on:
+      - mqtt-broker

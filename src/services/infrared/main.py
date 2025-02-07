@@ -1,4 +1,4 @@
-from infrared import IRLaneDetector
+from parts.infrared import IRLaneDetector
 from client.topics import Topics, InfraredPublishers, InfraredSubscribers
 from client.mqtt_client import ClientConfig
 

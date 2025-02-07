@@ -1,6 +1,6 @@
 import time
 from dataclasses import dataclass
-from PCA9685 import PCA9685
+from parts.PCA9685 import PCA9685
 
 
 class MotorTerminal:
