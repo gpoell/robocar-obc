@@ -7,7 +7,14 @@ RUN apt-get update && \
     apt-get install -y gcc && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy files to working directory and install dependencies
+# Set the working directory
 WORKDIR /app
-COPY . .
+
+# Docker-compose sets context at root level
+# The ultrasonic sensor depends on parts, client, and its main source files
+COPY ./src/services/ultrasonic/ .
+COPY ./src/client/ ./client
+COPY ./src/parts/ ./parts
+
+# Install dependencies
 RUN pip install -r requirements.txt --no-cache-dir

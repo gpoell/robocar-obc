@@ -1,33 +1,33 @@
 import paho.mqtt.client as mqtt
 import os
 
+# Set the MQTT broker and PORT
 BROKER = "mqtt-broker"
 PORT = 1883
-TOPIC_PUBLISH = "app/status"
-TOPIC_SUBSCRIBE = "device/ultrasonic/distance"
+
+# Set topics to subscribe to
+TOPIC_SUBSCRIBE = [
+    "device/ultrasonic/distance"
+]
 
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1)
 
 
-# Define callbacks
+# Subscribes to topics in TOPIC_SUBSCRIBE
 def on_connect(lClient, userdata, flags, return_code):
     if return_code == 0:
-        client.subscribe("device/infrared/left")
-        client.subscribe("device/infrared/middle")
-        client.subscribe("device/infrared/right")
-        client.subscribe("device/infrared/status")
-        client.subscribe("device/infrared/threads")
+        for topic in TOPIC_SUBSCRIBE:
+            client.subscribe(topic)
     else:
         print("could not connect, return code:", return_code)
 
+# Edit logic here when receiving a message
 def on_message(lClient, userdata, msg):
     message = msg.payload.decode()
     topic = msg.topic
-    print(f"Received message: {message} on topic {topic}")
-    if topic == "device/infrared/status" and message == "off":
-        print("Infrared sensor has disconnected...")
 
-    # client.publish(TOPIC_PUBLISH, "active")
+    # Functionality can go here
+    print(f"Received message: {message} on topic {topic}")
 
 client.on_connect = on_connect
 client.on_message = on_message

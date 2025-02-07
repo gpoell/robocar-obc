@@ -1,4 +1,4 @@
-from ultrasonic import Ultrasonic
+from parts.ultrasonic import Ultrasonic
 from client.topics import Topics, UltrasonicPublishers, UltrasonicSubscribers
 from client.mqtt_client import ClientConfig
 

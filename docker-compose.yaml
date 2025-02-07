@@ -45,13 +45,13 @@ services:
 
   listener:
     build: ./src/services/listener
-    tty: true
+    command: python main.py
     container_name: listener
     environment:
       - ENVIRON=${ENVIRON}
     develop:
       watch:
-        - action: sync
+        - action: sync+restart
           path: ./src/services/listener/main.py
           target: ./app/main.py
     depends_on:
@@ -61,7 +61,7 @@ services:
   vehicle:
     build:
       context: ./
-      dockerfile: ./src/services/vehicle/
+      dockerfile: ./src/services/vehicle
     container_name: vehicle
     tty: true
     privileged: true
@@ -83,17 +83,28 @@ services:
 
 
   ultrasonic:
-    build: ./src/sensors/ultrasonic
-    tty: true
-    container_name: sensor-ultrasonic
-    volumes:
-      - ./src/sensors/ultrasonic:/app
-      - ./src/client:/app/client
-
+    build:
+      context: ./
+      dockerfile: ./src/services/ultrasonic/Dockerfile
+    container_name: ultrasonic
     working_dir: /app
+    tty: true
     privileged: true
     environment:
       - ENVIRON=${ENVIRON}
+    develop:
+      watch:
+        - action: sync
+          path: ./src/services/ultrasonic
+          target: app/
+        - action: sync
+          path: src/parts
+          target: app/parts
+        - action: sync
+          path: src/client
+          target: app/client
+    depends_on:
+      - mqtt-broker
 
 
   infrared:

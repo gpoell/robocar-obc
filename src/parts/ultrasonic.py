@@ -134,7 +134,6 @@ class Ultrasonic(MqttDevice):
         while self.state == State.ON:
             time.sleep(freq)
             distance = self.calculate_distance()
-            print(distance)
             thread_count = threading.active_count()
 
             responses = [

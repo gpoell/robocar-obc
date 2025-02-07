@@ -1,2 +1,2 @@
 paho-mqtt
-gpiozero
+RPi.GPIO
