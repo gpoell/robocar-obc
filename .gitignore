@@ -5,3 +5,6 @@ mosquitto/logs
 
 # Ignore Python Dependencies/Cache
 __pycache__
+
+# Ignore Camera Env
+**/camera-venv/

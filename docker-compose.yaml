@@ -16,7 +16,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 256M
+          memory: 512M
 
 
   tests:
@@ -128,5 +128,23 @@ services:
         - action: sync
           path: src/client
           target: app/client
+    depends_on:
+      - mqtt-broker
+
+  camera:
+    build:
+      context: ./
+      dockerfile: ./src/services/camera/Dockerfile
+    container_name: camera
+    tty: true
+    devices:
+      - "/dev/video0:/dev/video0"
+    environment:
+      - DISPLAY=:0
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./src/parts/camera.py
+          target: app/camera.py
     depends_on:
       - mqtt-broker
