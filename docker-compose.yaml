@@ -139,8 +139,6 @@ services:
     tty: true
     devices:
       - "/dev/video0:/dev/video0"
-    environment:
-      - DISPLAY=:0
     develop:
       watch:
         - action: sync+restart

@@ -1,8 +1,9 @@
 import cv2
 import base64
-import numpy as np
 from paho.mqtt import client as mqtt
 from paho.mqtt import enums as mqttEnums
+from picamera2 import Picamera2
+from time import sleep
 
 class Camera:
     """
@@ -10,7 +11,9 @@ class Camera:
     """
     def __init__(
             self,
-            broker = "mqtt-broker",
+            # broker = "mqtt-broker",
+            # broker = "localhost",
+            broker = "192.168.12.102",
             port = 1883,
             topic = "device/camera/frames"
     ) -> None:
@@ -25,28 +28,27 @@ class Camera:
             self.client.on_connect = self._on_connect
             self.client.connect(broker, port, 60)
             self.client.loop_start()
-            # Open the camera
-            self.camera = cv2.VideoCapture(0)
-
-            # Check if the camera opened successfully
-            if not self.camera.isOpened():
-                raise ValueError("Error: Could not open webcam.")
 
         except Exception as e:
             self.stop()
             raise e
 
+    def init(self) -> None:
+        """Initializes camera before use"""
+        print("Initializing camera...")
+        # Open the camera
+        self.camera = Picamera2()
+        self.camera.configure(self.camera.create_preview_configuration(main={"size": (320, 240), "format": "BGR888"}))
+        self.camera.start()
+        sleep(2)
+
+
     def start(self) -> None:
         """Starts capturing images and publishing to the specified topic."""
+        count = 0
         while self.state:
-            try:
-                ret, frame = self.camera.read()
-            except Exception as e:
-                print(e)
-                raise ValueError("Error: Failed to capture image.")
-            # if not ret:
-                # raise ValueError("Error: Failed to capture image.")
-            print(np.size(frame))
+            frame = self.camera.capture_array()
+            count+= 1
             _, img_encoded = cv2.imencode('.jpg', frame)
             frame = img_encoded.tobytes()
             frame = base64.b64encode(frame).decode('utf-8')
@@ -55,9 +57,9 @@ class Camera:
     def stop(self) -> None:
         """Stop the camera: disconnect from client and close camera"""
         self.state = False
-        if self.camera: self.camera.release()
+        if self.camera: self.camera.stop()
         if self.client.is_connected(): self.client.loop_stop()
-        cv2.destroyAllWindows()
+
 
     def _on_connect(self, client, userdata, flags, rc, properties) -> None:
         """On connect callback"""
@@ -67,11 +69,12 @@ class Camera:
 if __name__ == "__main__":
     camera = Camera()
     try:
+        camera.init()
         camera.start()
     except KeyboardInterrupt:
         print("User manually stopped camera with CTRL+C...")
     except Exception as e:
-        print(e)
+        print('Error: ', e)
     finally:
         print("Cleaning up camera connections...")
         camera.stop()

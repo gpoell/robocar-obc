@@ -5,7 +5,6 @@ FROM python:3.12-slim-bullseye
 RUN apt-get update && \
     apt-get install -y libgl1-mesa-glx && \
     apt-get install -y libglib2.0-0 && \
-    pip install opencv-python && \
     rm -rf /var/lib/apt/lists/*
 
 # Create a working directory in the container
