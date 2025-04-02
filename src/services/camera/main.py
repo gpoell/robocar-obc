@@ -1,34 +1,3 @@
-# import numpy as np
-# from picamera2 import Picamera2
-# import time
-# import cv2
-
-# # Create an instance of Picamera2
-# picam2 = Picamera2()
-
-# # Start the camera
-# picam2.start()
-
-# # Sleep to give the camera time to adjust settings (optional)
-# time.sleep(2)
-
-# # Capture the image to a NumPy array
-# image_array = picam2.capture_array()
-
-# # Stop the camera after capturing the image
-# picam2.stop()
-
-# # Display the captured image using OpenCV
-# cv2.imshow("Captured Image", image_array)
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
-
-# # Optionally save the image as a file
-# cv2.imwrite("captured_image.jpg", image_array)
-
-# print("Image captured and displayed.")
-
-
 import cv2
 import base64
 import numpy as np
@@ -70,7 +39,7 @@ class Camera:
         print("Initializing camera...")
         # Open the camera
         self.camera = Picamera2()
-        self.camera.configure(self.camera.create_preview_configuration(main={"size": (620,480), "format": "BGR888"}))
+        self.camera.configure(self.camera.create_preview_configuration(main={"size": (320, 240), "format": "RGB888"}))
         self.camera.start()
         sleep(2)
 
