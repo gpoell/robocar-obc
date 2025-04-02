@@ -69,7 +69,7 @@ services:
       - ENVIRON=${ENVIRON}
     develop:
       watch:
-        - action: sync
+        - action: sync+restart
           path: src/services/vehicle
           target: app/
         - action: sync
@@ -78,6 +78,10 @@ services:
         - action: sync
           path: src/client
           target: app/client
+        - action: sync+restart
+          path: src/pipelines
+          target: app/pipelines
+
     depends_on:
       - mqtt-broker
 

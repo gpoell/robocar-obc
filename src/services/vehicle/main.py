@@ -2,6 +2,7 @@ import time
 from vehicle import Vehicle
 from client.topics import VehiclePublishers, VehicleSubscribers, Topics
 from client.mqtt_client import ClientConfig
+from pipelines.pipelines import PID, obstacle_detection
 
 def trajectory_planning(distance: int) -> int:
 

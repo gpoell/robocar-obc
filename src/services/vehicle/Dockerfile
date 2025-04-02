@@ -9,6 +9,7 @@ WORKDIR /app
 COPY ./src/services/vehicle .
 COPY ./src/client ./client
 COPY ./src/parts/ ./parts
+COPY ./src/pipelines/ ./pipelines
 
 # Install dependencies
 RUN pip install -r requirements.txt --no-cache-dir
