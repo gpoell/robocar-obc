@@ -27,6 +27,7 @@ class Vehicle(MqttDevice):
         self.motor = Motor()
         self.target_distance = 0      # Track distances from ultrasonic sensor
         self.lane_model = [0, 0, 0]   # Track status of IR lane detectors
+        self.lane_error = 0           # Track CV lane detection error
 
         # Attach MQTT Event-Based Callbacks to Client
         self.client.on_message = self.client_on_message
@@ -51,6 +52,9 @@ class Vehicle(MqttDevice):
 
         if topic == self.subscribers.irright.topic:
             self.lane_model[2] = int(message)
+
+        if topic == self.subscribers.cvLaneError.topic:
+            self.lane_error = int(message)
 
     def drive(self, lu_pwm: int, ll_pwm: int, ru_pwm: int, rl_pwm: int) -> None:
         """
