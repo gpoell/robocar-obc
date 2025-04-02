@@ -162,6 +162,7 @@ class VehicleSubscribers(Subscribers):
     irleft: Topic = Topic(topic=InfraredPublishers.irleft.topic, qos=1)
     irmiddle: Topic = Topic(topic=InfraredPublishers.irmiddle.topic, qos=1)
     irright: Topic = Topic(topic=InfraredPublishers.irright.topic, qos=1)
+    cvLaneError: Topic = Topic(topic="device/camera/lane_error", qos=1)
 
 
 
