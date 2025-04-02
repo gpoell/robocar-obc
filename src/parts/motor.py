@@ -44,6 +44,8 @@ class Wheel:
     def set_speed(self, pwm, duty) -> None:
         """Method for setting the speed and direction of a wheel."""
 
+        self.speed = duty
+
         if duty > 0:
             pwm.set_motor_pwm(self.reverse, 0)
             pwm.set_motor_pwm(self.forward, duty)
