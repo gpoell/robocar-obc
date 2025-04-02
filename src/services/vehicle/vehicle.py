@@ -2,6 +2,28 @@ from time import sleep
 from client.mqtt_client import MqttDevice, ClientConfig, State
 from parts.motor import Motor
 
+class PID:
+    def __init__(self, Kp, Ki, Kd, setpoint=0):
+        self.Kp = Kp  # Proportional gain
+        self.Ki = Ki  # Integral gain
+        self.Kd = Kd  # Derivative gain
+        self.setpoint = setpoint  # Desired value
+
+        self.previous_error = 0
+        self.integral = 0
+
+    def update(self, current_value, dt):
+        """Calculate PID output given the current system value and time step."""
+        error = self.setpoint - current_value
+        self.integral += error * dt
+        derivative = (error - self.previous_error) / dt if dt > 0 else 0
+
+        output = (self.Kp * error) + (self.Ki * self.integral) + (self.Kd * derivative)
+        self.previous_error = error
+
+        return output
+
+
 class Vehicle(MqttDevice):
     """
     The Vehicle is the primary component used to drive the car. It is
@@ -177,6 +199,22 @@ class Vehicle(MqttDevice):
 
 
         self.motor.drive(0, 0, 0, 0)
+
+    def speed(self) -> list[int]:
+        """
+        Returns the "speed" of the vehicle which is a representation of each
+        wheels PWM duty cycle in the order:
+            1. Left Upper
+            2. Left Lower
+            3. Right Upper
+            4. Right Lower
+        """
+        return [
+            self.motor.wheel_left_upper.speed,
+            self.motor.wheel_left_lower.speed,
+            self.motor.wheel_right_upper.speed,
+            self.motor.wheel_right_lower.speed
+        ]
 
 
 if __name__ == "__main__":
